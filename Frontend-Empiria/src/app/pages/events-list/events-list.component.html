@@ -1,0 +1,10 @@
+<div class="page-header section container">
+    <h1 class="page-title">Próximos <span class="text-gradient">Eventos</span></h1>
+    <p class="page-subtitle">Explora lo mejor de la cultura y el entretenimiento en Jujuy.</p>
+</div>
+
+<div class="container section">
+    <div class="events-grid">
+        <app-event-card *ngFor="let event of events$ | async" [event]="event"></app-event-card>
+    </div>
+</div>

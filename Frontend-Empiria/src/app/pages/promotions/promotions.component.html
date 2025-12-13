@@ -1,0 +1,16 @@
+<div class="page-header section container">
+    <h1 class="page-title">Promociones <span class="text-gradient">Exclusivas</span></h1>
+    <p class="page-subtitle">Aprovechá la preventa y descuentos especiales en nuestros eventos destacados.</p>
+</div>
+
+<div class="container section">
+    <div class="events-grid" *ngIf="promoEvents$ | async as events">
+        <app-event-card *ngFor="let event of events" [event]="event"></app-event-card>
+
+        <div *ngIf="events.length === 0" class="no-events">
+            <span class="material-icons">sentiment_dissatisfied</span>
+            <h3>Por el momento no hay promociones activas.</h3>
+            <p>¡Seguinos en redes para enterarte de las novedades!</p>
+        </div>
+    </div>
+</div>

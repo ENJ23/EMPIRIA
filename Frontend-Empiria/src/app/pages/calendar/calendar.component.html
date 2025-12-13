@@ -1,0 +1,26 @@
+<div class="calendar-container section container">
+    <div class="calendar-header">
+        <h1 class="page-title">Calendario de <span class="text-gradient">Eventos</span></h1>
+        <div class="month-selector">
+            <button class="btn-icon" (click)="prevMonth()"><span class="material-icons">chevron_left</span></button>
+            <h2>{{ currentMonth | date:'MMMM yyyy' | titlecase }}</h2>
+            <button class="btn-icon" (click)="nextMonth()"><span class="material-icons">chevron_right</span></button>
+        </div>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+
+        <div *ngFor="let day of calendarDays" class="calendar-day" [class.empty]="!day" [class.today]="isToday(day)">
+
+            <div class="day-number" *ngIf="day">{{ day | date:'d' }}</div>
+
+            <div class="day-events" *ngIf="day">
+                <div *ngFor="let event of getEventsForDay(day)" class="mini-event" [routerLink]="['/events', event.id]">
+                    <span class="event-dot"></span>
+                    <span class="event-title">{{ event.title }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

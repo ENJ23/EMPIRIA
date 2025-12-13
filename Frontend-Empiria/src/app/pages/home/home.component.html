@@ -1,0 +1,60 @@
+<app-hero-slider></app-hero-slider>
+
+<section id="features" class="section container">
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="material-icons feature-icon">star</span>
+            <h3>Exclusividad</h3>
+            <p>Acceso a los eventos más premium de Jujuy.</p>
+        </div>
+        <div class="feature-card">
+            <span class="material-icons feature-icon">security</span>
+            <h3>Seguridad</h3>
+            <p>Compras protegidas y entradas verificadas con QR.</p>
+        </div>
+        <div class="feature-card">
+            <span class="material-icons feature-icon">support_agent</span>
+            <h3>Soporte</h3>
+            <p>Atención personalizada para cada evento.</p>
+        </div>
+    </div>
+</section>
+
+<section id="upcoming-events" class="section container">
+    <div class="section-header">
+        <h2 class="section-title">Próximos <span class="text-gradient">Eventos</span></h2>
+        <a routerLink="/events" class="btn btn-secondary">Ver Todos</a>
+    </div>
+
+    <div class="events-grid">
+        <app-event-card *ngFor="let event of upcomingEvents$ | async" [event]="event"></app-event-card>
+    </div>
+</section>
+
+<section id="about" class="section about-section">
+    <div class="container about-grid">
+        <div class="about-content">
+            <h2 class="section-title">Quienes <span class="text-gradient">Somos</span></h2>
+            <p class="lead">Empiria es más que una organizadora de eventos; somos creadores de experiencias
+                inolvidables.</p>
+            <p>Nacimos con la misión de transformar la escena nocturna y cultural de Jujuy, fusionando arte, música y
+                tecnología en cada encuentro.</p>
+            <button class="btn">Conocer Más</button>
+        </div>
+        <div class="about-image">
+            <img src="https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?w=800&q=80" alt="About Empiria"
+                class="rounded-image">
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="section container contact-section">
+    <div class="contact-box">
+        <h2 class="section-title text-center">¿Tienes un evento en mente?</h2>
+        <p class="text-center text-muted mb-4">Hagámoslo realidad juntos. Contáctanos para cotizar tu próximo gran
+            evento.</p>
+        <div class="text-center">
+            <button class="btn">Contactar Ahora</button>
+        </div>
+    </div>
+</section>

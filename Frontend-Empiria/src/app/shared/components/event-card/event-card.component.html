@@ -1,0 +1,30 @@
+<div class="event-card" *ngIf="event">
+    <div class="card-image">
+        <img [src]="event.imageUrl" [alt]="event.title">
+        <div class="card-overlay">
+            <span class="category-tag">{{ event.categories[0] }}</span>
+        </div>
+    </div>
+    <div class="card-content">
+        <div class="card-date">
+            <span class="day">{{ event.date | date:'dd' }}</span>
+            <span class="month">{{ event.date | date:'MMM' }}</span>
+        </div>
+        <div class="card-details">
+            <h3 class="card-title">{{ event.title }}</h3>
+            <p class="card-location">
+                <span class="material-icons">location_on</span>
+                {{ event.location }}
+            </p>
+            <div class="card-footer">
+                <span class="price" *ngIf="event.priceRange.min > 0">
+                    Desde ${{ event.priceRange.min }}
+                </span>
+                <span class="price-free" *ngIf="event.priceRange.min === 0">
+                    Entrada Libre
+                </span>
+                <button class="btn-text">Ver más &rarr;</button>
+            </div>
+        </div>
+    </div>
+</div>

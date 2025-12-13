@@ -1,0 +1,23 @@
+<header class="header">
+    <div class="container header-content">
+        <a routerLink="/" class="logo">
+            <span class="logo-text">EMPIRIA</span>
+        </a>
+
+        <nav class="nav-menu">
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+                class="nav-link">Inicio</a>
+            <a routerLink="/events" routerLinkActive="active" class="nav-link">Eventos</a>
+            <a routerLink="/calendar" routerLinkActive="active" class="nav-link">Calendario</a>
+            <a routerLink="/promociones" routerLinkActive="active" class="nav-link">Promociones</a>
+            <a routerLink="/contacto" routerLinkActive="active" class="nav-link">Contacto</a>
+        </nav>
+
+        <div class="user-actions">
+            <button class="btn-icon">
+                <span class="material-icons">search</span>
+            </button>
+            <button class="btn btn-sm">Ingresar</button>
+        </div>
+    </div>
+</header>
