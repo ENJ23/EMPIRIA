@@ -19,5 +19,19 @@ export const routes: Routes = [
     { path: 'calendar', component: CalendarComponent },
     { path: 'promociones', component: PromotionsComponent },
     { path: 'contacto', component: ContactComponent },
+
+    // Admin Routes
+    { path: 'admin/login', component: LoginComponent },
+    {
+        path: 'admin',
+        component: DashboardComponent,
+        canActivate: [authGuard],
+        children: [
+            { path: 'events', component: EventsAdminComponent },
+            { path: 'sales', component: SalesAdminComponent },
+            { path: '', redirectTo: 'events', pathMatch: 'full' }
+        ]
+    },
+
     { path: '**', redirectTo: '' }
 ];
