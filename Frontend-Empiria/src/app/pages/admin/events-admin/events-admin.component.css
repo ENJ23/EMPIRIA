@@ -1,0 +1,80 @@
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.events-table-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+th,
+td {
+    padding: 1.2rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+th {
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: 0.9rem;
+}
+
+.event-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.event-title {
+    font-weight: bold;
+}
+
+.event-preview {
+    font-size: 0.8rem;
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.status-badge.active {
+    background: rgba(0, 255, 128, 0.2);
+    color: #00ff80;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn-icon.delete:hover {
+    color: #ff4444;
+}

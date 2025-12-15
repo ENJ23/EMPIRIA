@@ -1,0 +1,41 @@
+<div class="admin-header">
+    <h2>Administrar Eventos</h2>
+    <button class="btn btn-primary">
+        <span class="material-icons">add</span> Nuevo Evento
+    </button>
+</div>
+
+<div class="events-table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Fecha</th>
+                <th>Lugar</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let event of events$ | async">
+                <td>
+                    <div class="event-cell">
+                        <span class="event-title">{{ event.title }}</span>
+                        <span class="event-preview text-muted">{{ event.description | slice:0:30 }}...</span>
+                    </div>
+                </td>
+                <td>{{ event.date | date:'dd/MM/yyyy' }}</td>
+                <td>{{ event.location }}</td>
+                <td><span class="status-badge" [class.active]="!event.isPreventa">Activo</span></td>
+                <td class="actions-cell">
+                    <button class="btn-icon">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <button class="btn-icon delete">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

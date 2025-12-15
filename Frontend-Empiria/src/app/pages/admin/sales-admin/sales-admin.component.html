@@ -1,0 +1,67 @@
+<div class="admin-header">
+    <h2>Reporte de Ventas</h2>
+    <div class="filter-controls">
+        <select class="event-selector">
+            <option value="">Todos los eventos</option>
+            <option *ngFor="let event of events$ | async" [value]="event.id">{{ event.title }}</option>
+        </select>
+    </div>
+</div>
+
+<div class="sales-stats section-grid">
+    <div class="stat-card">
+        <h3>Total Vendido</h3>
+        <p class="stat-value">$1.250.000</p>
+    </div>
+    <div class="stat-card">
+        <h3>Entradas</h3>
+        <p class="stat-value">450</p>
+    </div>
+    <div class="stat-card">
+        <h3>Ocupación</h3>
+        <p class="stat-value">85%</p>
+    </div>
+</div>
+
+<div class="table-container">
+    <h3>Lista de Compradores</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>DNI</th>
+                <th>Evento</th>
+                <th>Tipo Entrada</th>
+                <th>Fecha Compra</th>
+                <th>Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Mock Data Rows -->
+            <tr>
+                <td>Juan Pérez</td>
+                <td>12.345.678</td>
+                <td>Neon Party</td>
+                <td><span class="badge vip">VIP</span></td>
+                <td>12/12/2025</td>
+                <td>$15,000</td>
+            </tr>
+            <tr>
+                <td>Maria Garcia</td>
+                <td>87.654.321</td>
+                <td>Tech Summit</td>
+                <td><span class="badge general">General</span></td>
+                <td>11/12/2025</td>
+                <td>$5,000</td>
+            </tr>
+            <tr>
+                <td>Carlos Lopez</td>
+                <td>11.222.333</td>
+                <td>Neon Party</td>
+                <td><span class="badge general">General</span></td>
+                <td>10/12/2025</td>
+                <td>$8,000</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

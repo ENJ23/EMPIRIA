@@ -5,6 +5,11 @@ import { EventDetailComponent } from './pages/event-detail/event-detail.componen
 import { CalendarComponent } from './pages/calendar/calendar.component';
 import { PromotionsComponent } from './pages/promotions/promotions.component';
 import { ContactComponent } from './pages/contact/contact.component';
+import { authGuard } from './core/guards/auth.guard';
+import { LoginComponent } from './pages/admin/login/login.component';
+import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
+import { EventsAdminComponent } from './pages/admin/events-admin/events-admin.component';
+import { SalesAdminComponent } from './pages/admin/sales-admin/sales-admin.component';
 
 
 export const routes: Routes = [
