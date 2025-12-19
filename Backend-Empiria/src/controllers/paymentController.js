@@ -43,6 +43,7 @@ const createPreference = async (req, res) => {
                     failure: `${frontendUrl}/failure`,
                     pending: `${frontendUrl}/pending`
                 },
+                notification_url: process.env.WEBHOOK_URL,
                 auto_return: 'approved',
                 metadata: {
                     userId: req.uid, // From JWT
@@ -64,6 +65,55 @@ const createPreference = async (req, res) => {
     }
 };
 
+const Payment = new MercadoPago.Payment(client);
+const Ticket = require('../models/Ticket');
+
+/**
+ * Handle Mercado Pago Webhook
+ * @param {object} req 
+ * @param {object} res 
+ */
+const receiveWebhook = async (req, res) => {
+    try {
+        const { type, data } = req.body;
+        const topic = req.query.topic || req.query.type; // Some versions use query, others body
+        const id = req.query.id || req.query['data.id'] || data?.id;
+
+        // Validamos que sea una notificación de pago
+        if (topic === 'payment' || type === 'payment') {
+            if (!id) return res.sendStatus(200);
+
+            // Consultamos el estado del pago a Mercado Pago
+            const payment = await Payment.get({ id });
+
+            if (payment.status === 'approved') {
+                const { userId, eventId } = payment.metadata;
+
+                // Verificar si ya existe el ticket para evitar duplicados
+                const ticketExists = await Ticket.findOne({ paymentId: id });
+                if (ticketExists) return res.sendStatus(200);
+
+                // Crear el Ticket
+                const ticket = new Ticket({
+                    user: userId,
+                    event: eventId,
+                    paymentId: id,
+                    status: payment.status,
+                    amount: payment.transaction_amount
+                });
+
+                await ticket.save();
+                console.log(`Ticket creado para usuario ${userId} evento ${eventId}`);
+            }
+        }
+        res.sendStatus(200);
+    } catch (error) {
+        console.error('Webhook Error:', error);
+        res.sendStatus(500);
+    }
+};
+
 module.exports = {
-    createPreference
+    createPreference,
+    receiveWebhook
 };

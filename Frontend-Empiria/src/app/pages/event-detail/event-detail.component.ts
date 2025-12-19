@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
@@ -27,6 +27,7 @@ export class EventDetailComponent implements OnInit {
     isProcessing = false;
 
     private paymentService = inject(PaymentService);
+    private cdr = inject(ChangeDetectorRef);
 
     constructor(
         private route: ActivatedRoute,
@@ -60,15 +61,19 @@ export class EventDetailComponent implements OnInit {
                 try {
                     this.qrCodeUrl = await QRCode.toDataURL(this.paymentUrl);
                     this.showPaymentModal = true;
+                    this.isProcessing = false;
+                    this.cdr.detectChanges(); // Force UI update
                 } catch (err) {
                     console.error('Error generando QR', err);
+                    this.isProcessing = false;
+                    this.cdr.detectChanges();
                 }
-                this.isProcessing = false;
             },
             error: (err) => {
                 console.error(err);
                 alert('Hubo un error al iniciar el pago. ¿Estás logueado?');
                 this.isProcessing = false;
+                this.cdr.detectChanges();
             }
         });
     }
