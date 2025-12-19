@@ -25,6 +25,8 @@ const createPreference = async (req, res) => {
         // TODO: Handle logic for price selection if multiple tiers exist
         // For now, simple logic: preventa > min price
 
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+
         const result = await preference.create({
             body: {
                 items: [
@@ -37,9 +39,9 @@ const createPreference = async (req, res) => {
                     }
                 ],
                 back_urls: {
-                    success: 'http://localhost:4200/success',
-                    failure: 'http://localhost:4200/failure',
-                    pending: 'http://localhost:4200/pending'
+                    success: `${frontendUrl}/success`,
+                    failure: `${frontendUrl}/failure`,
+                    pending: `${frontendUrl}/pending`
                 },
                 auto_return: 'approved',
                 metadata: {
