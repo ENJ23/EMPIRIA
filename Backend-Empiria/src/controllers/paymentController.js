@@ -89,13 +89,22 @@ const receiveWebhook = async (req, res) => {
             if (payment.status === 'approved') {
                 console.log('Payment Data Full:', JSON.stringify(payment, null, 2));
 
-                // Mercado Pago returns metadata in snake_case
-                const { user_id, event_id } = payment.metadata || {};
-                console.log('Metadata extracted:', { user_id, event_id });
+                let user_id, event_id;
+                try {
+                    if (payment.external_reference) {
+                        const refs = JSON.parse(payment.external_reference);
+                        user_id = refs.u;
+                        event_id = refs.e;
+                    }
+                } catch (e) {
+                    console.error('Error parsing external_reference:', e);
+                }
+
+                console.log('Extracted Refs:', { user_id, event_id });
 
                 if (!user_id || !event_id) {
-                    console.error('Metadata missing user_id or event_id');
-                    return res.sendStatus(200); // Don't crash, just ignore
+                    console.error('Missing user_id or event_id in details');
+                    return res.sendStatus(200);
                 }
 
                 // Verificar si ya existe el ticket para evitar duplicados
