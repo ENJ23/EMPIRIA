@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
     styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {
-    constructor(private authService: AuthService) { }
+    private authService = inject(AuthService);
+    user = this.authService.currentUser;
 
     logout() {
         this.authService.logout();

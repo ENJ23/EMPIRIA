@@ -1,20 +1,63 @@
 <div class="login-container">
     <div class="login-box">
-        <h2 class="text-center">Panel Admin</h2>
-        <p class="text-center text-muted">Ingresa tu contraseña de encargado</p>
+        <h2 class="text-center">{{ isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión' }}</h2>
+        <p class="text-center text-muted">{{ isRegisterMode ? 'Únete a Empiria' : 'Bienvenido a Empiria' }}</p>
 
-        <form (submit)="onLogin($event)">
+        <!-- Google Login -->
+        <div class="google-login-wrapper">
+            <div id="google-btn"></div>
+        </div>
+
+        <div class="divider">
+            <span>o ingresa con tu email</span>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <!-- Register Fields -->
+            <ng-container *ngIf="isRegisterMode">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" formControlName="nombre" placeholder="Tu nombre"
+                        [class.invalid]="isFieldInvalid('nombre')">
+                </div>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <input type="text" formControlName="apellido" placeholder="Tu apellido">
+                </div>
+            </ng-container>
+
             <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required>
+                <label>Correo Electrónico</label>
+                <input type="email" formControlName="correo" placeholder="ejemplo@email.com"
+                    [class.invalid]="isFieldInvalid('correo')">
+                <span class="error-text" *ngIf="isFieldInvalid('correo')">
+                    Email requerido y válido
+                </span>
             </div>
 
-            <p class="error-msg" *ngIf="error">{{ error }}</p>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" formControlName="contrasena" placeholder="••••••••"
+                    [class.invalid]="isFieldInvalid('contrasena')">
+                <span class="error-text" *ngIf="isFieldInvalid('contrasena')">
+                    Min 6 caracteres
+                </span>
+            </div>
 
-            <button type="submit" class="btn btn-block">Ingresar</button>
+            <p class="error-msg" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+            <button type="submit" class="btn btn-block" [disabled]="loginForm.invalid">
+                {{ isRegisterMode ? 'Registrarse' : 'Ingresar' }}
+            </button>
         </form>
 
         <div class="text-center mt-4">
+            <button class="toggle-btn" (click)="toggleMode()">
+                {{ isRegisterMode ? 'Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate' }}
+            </button>
+        </div>
+
+        <div class="text-center mt-2">
             <a routerLink="/" class="back-link">Volver al sitio</a>
         </div>
     </div>

@@ -14,10 +14,25 @@
         </nav>
 
         <div class="user-actions">
-            <button class="btn-icon">
+            <!-- <button class="btn-icon">
                 <span class="material-icons">search</span>
-            </button>
-            <button class="btn btn-sm">Ingresar</button>
+            </button> -->
+
+            <ng-container *ngIf="authService.currentUser() as user; else loginButton">
+                <div class="user-info">
+                    <span class="user-name">Hola, {{ user.nombre }}</span>
+                    <button (click)="logout()" class="btn-logout" title="Cerrar Sesión">
+                        <span class="material-icons">logout</span>
+                    </button>
+                    <a *ngIf="user.tipo === 'Admin'" routerLink="/admin" class="btn-dashboard" title="Dashboard">
+                        <span class="material-icons">dashboard</span>
+                    </a>
+                </div>
+            </ng-container>
+
+            <ng-template #loginButton>
+                <a routerLink="/admin/login" class="btn btn-sm">Ingresar</a>
+            </ng-template>
         </div>
     </div>
 </header>

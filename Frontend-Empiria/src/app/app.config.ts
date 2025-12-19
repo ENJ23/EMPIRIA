@@ -5,12 +5,15 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
 
+import { provideHttpClient, withFetch } from '@angular/common/http';
+
 registerLocaleData(localeEs);
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding()),
     provideClientHydration(withEventReplay()),
+    provideHttpClient(withFetch()),
     { provide: LOCALE_ID, useValue: 'es-AR' }
   ]
 };

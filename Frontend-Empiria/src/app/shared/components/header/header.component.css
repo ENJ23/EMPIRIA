@@ -82,3 +82,45 @@
     padding: 8px 20px;
     font-size: 0.85rem;
 }
+
+/* User Info */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.btn-logout,
+.btn-dashboard {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+}
+
+.btn-dashboard:hover {
+    background: var(--primary-color);
+    color: black;
+}
+
+.material-icons {
+    font-size: 1.2rem;
+}

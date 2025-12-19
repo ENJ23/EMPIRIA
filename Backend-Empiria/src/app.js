@@ -15,7 +15,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const paymentRoutes = require('./routes/payment.routes');
+const authRoutes = require('./routes/auth.routes');
+
 app.use('/api/payments', paymentRoutes);
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

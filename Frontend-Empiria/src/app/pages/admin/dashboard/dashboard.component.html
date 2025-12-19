@@ -17,9 +17,9 @@
         </nav>
 
         <div class="user-profile">
-            <div class="avatar">AD</div>
+            <div class="avatar">{{ user()?.nombre?.charAt(0) || 'U' }}</div>
             <div class="info">
-                <p class="name">Admin</p>
+                <p class="name">{{ user()?.nombre }} {{ user()?.apellido }}</p>
                 <button (click)="logout()" class="logout-btn">Cerrar Sesión</button>
             </div>
         </div>

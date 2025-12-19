@@ -1,41 +1,46 @@
 /* Empiria Design System */
 :root {
   /* Colors */
-  --primary-color: #7000ff; /* Electric Violet */
+  --primary-color: #7000ff;
+  /* Electric Violet */
   --primary-glow: #bd00ff;
-  --secondary-color: #00d4ff; /* Cyan */
-  --accent-color: #ffd700; /* Gold */
-  
+  --secondary-color: #00d4ff;
+  /* Cyan */
+  --accent-color: #ffd700;
+  /* Gold */
+
   --bg-dark: #0a0a0a;
   --bg-card: #141414;
   --bg-overlay: rgba(0, 0, 0, 0.7);
-  
+
   --text-main: #ffffff;
   --text-muted: #a0a0a0;
-  
+
   /* Typography */
   --font-main: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', sans-serif;
-  
+
   /* Spacing */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
   --spacing-md: 2rem;
   --spacing-lg: 4rem;
   --spacing-xl: 8rem;
-  
+
   /* Borders */
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  
+
   /* Effects */
   --shadow-glow: 0 0 20px rgba(112, 0, 255, 0.5);
   --transition-fast: 0.3s ease;
 }
 
 /* Reset & Base */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -47,9 +52,16 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
+  padding-top: 80px;
+  /* Compensation for fixed header */
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
