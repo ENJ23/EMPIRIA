@@ -19,6 +19,7 @@ const authRoutes = require('./routes/auth.routes');
 
 app.use('/api/payments', paymentRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/events', require('./routes/events.routes'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

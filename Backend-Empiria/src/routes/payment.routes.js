@@ -1,8 +1,16 @@
-const express = require('express');
-const router = express.Router();
-const { createPayment, handleWebhook } = require('../controllers/paymentController');
+const { Router } = require('express');
+const { createPreference } = require('../controllers/paymentController');
+const { validarJWT } = require('../middlewares/validate-jwt');
 
-router.post('/create', createPayment);
-router.post('/webhook', handleWebhook);
+const router = Router();
+
+// Create preference (requires login)
+router.post('/create-preference', validarJWT, createPreference);
+
+// Webhooks (optional for now, but good placeholder)
+router.post('/webhook', (req, res) => {
+    // console.log(req.query);
+    res.sendStatus(200);
+});
 
 module.exports = router;

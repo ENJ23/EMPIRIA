@@ -1,4 +1,4 @@
-<div class="event-card" *ngIf="event">
+<div class="event-card" *ngIf="event" [routerLink]="['/events', event.id]">
     <div class="card-image">
         <img [src]="event.imageUrl" [alt]="event.title">
         <div class="card-overlay">

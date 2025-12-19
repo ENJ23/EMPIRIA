@@ -69,8 +69,8 @@
                     </div>
                 </div>
 
-                <button class="btn btn-block" [disabled]="!selectedTicket" (click)="purchase()">
-                    Confirmar Compra
+                <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing" (click)="purchase()">
+                    {{ isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
                 </button>
                 <p class="secure-note">
                     <span class="material-icons">lock</span> Pago 100% Seguro
@@ -85,3 +85,24 @@
         <p>Cargando evento...</p>
     </div>
 </ng-template>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" *ngIf="showPaymentModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Finalizar Compra</h3>
+        <p>Escanea el código QR con tu celular o haz clic en el botón para pagar.</p>
+
+        <div class="qr-container" *ngIf="qrCodeUrl">
+            <img [src]="qrCodeUrl" alt="QR de Pago">
+        </div>
+
+        <div class="modal-actions">
+            <a [href]="paymentUrl" class="btn" target="_blank">
+                Pagar con Mercado Pago
+            </a>
+            <button class="btn-secondary" (click)="closeModal()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>

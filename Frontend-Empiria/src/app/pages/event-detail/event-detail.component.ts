@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { Event } from '../../core/models/event.model';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
+import * as QRCode from 'qrcode';
 
 @Component({
     selector: 'app-event-detail',
@@ -16,6 +18,15 @@ export class EventDetailComponent implements OnInit {
     event$!: Observable<Event | undefined>;
     selectedTicket: string | null = null;
     currentPrice: number = 0;
+    eventId: string | null = null;
+
+    // Payment State
+    showPaymentModal = false;
+    paymentUrl = '';
+    qrCodeUrl = '';
+    isProcessing = false;
+
+    private paymentService = inject(PaymentService);
 
     constructor(
         private route: ActivatedRoute,
@@ -24,6 +35,7 @@ export class EventDetailComponent implements OnInit {
 
     ngOnInit() {
         this.event$ = this.route.paramMap.pipe(
+            tap(params => this.eventId = params.get('id')),
             switchMap(params => {
                 const id = params.get('id');
                 return this.eventService.getEventById(id!);
@@ -37,9 +49,31 @@ export class EventDetailComponent implements OnInit {
     }
 
     purchase() {
-        if (confirm(`¿Confirmar compra de entrada ${this.selectedTicket} por $${this.currentPrice}?`)) {
-            alert('¡Compra realizada con éxito! Descargando comprobante...');
-            // Here would be the logic to download PDF or QR
-        }
+        if (!this.selectedTicket || !this.eventId) return;
+
+        this.isProcessing = true;
+        const quantity = 1; // Simplificado por ahora
+
+        this.paymentService.createPreference(this.eventId, quantity).subscribe({
+            next: async (res: any) => {
+                this.paymentUrl = res.init_point;
+                try {
+                    this.qrCodeUrl = await QRCode.toDataURL(this.paymentUrl);
+                    this.showPaymentModal = true;
+                } catch (err) {
+                    console.error('Error generando QR', err);
+                }
+                this.isProcessing = false;
+            },
+            error: (err) => {
+                console.error(err);
+                alert('Hubo un error al iniciar el pago. ¿Estás logueado?');
+                this.isProcessing = false;
+            }
+        });
+    }
+
+    closeModal() {
+        this.showPaymentModal = false;
     }
 }

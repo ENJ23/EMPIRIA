@@ -20,9 +20,13 @@ export class CalendarComponent implements OnInit {
     constructor(private eventService: EventService) { }
 
     ngOnInit() {
-        this.eventService.getEvents().subscribe(events => {
-            this.events = events;
-            this.generateCalendar();
+        this.generateCalendar();
+        this.eventService.getEvents().subscribe({
+            next: (events) => {
+                this.events = events;
+                // No need to regenerate grid, just the events on top of it
+            },
+            error: (err) => console.error('Error loading events for calendar', err)
         });
     }
 
