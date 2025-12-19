@@ -46,8 +46,8 @@ const createPreference = async (req, res) => {
                 notification_url: process.env.WEBHOOK_URL,
                 auto_return: 'approved',
                 metadata: {
-                    userId: req.uid, // From JWT
-                    eventId: eventId
+                    user_id: req.uid, // Snake case for MP
+                    event_id: eventId
                 }
             }
         });
@@ -87,7 +87,8 @@ const receiveWebhook = async (req, res) => {
             const payment = await Payment.get({ id });
 
             if (payment.status === 'approved') {
-                const { userId, eventId } = payment.metadata;
+                // Mercado Pago returns metadata in snake_case
+                const { user_id, event_id } = payment.metadata;
 
                 // Verificar si ya existe el ticket para evitar duplicados
                 const ticketExists = await Ticket.findOne({ paymentId: id });
@@ -95,8 +96,8 @@ const receiveWebhook = async (req, res) => {
 
                 // Crear el Ticket
                 const ticket = new Ticket({
-                    user: userId,
-                    event: eventId,
+                    user: user_id,
+                    event: event_id,
                     paymentId: id,
                     status: payment.status,
                     amount: payment.transaction_amount
