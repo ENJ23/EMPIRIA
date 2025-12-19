@@ -87,8 +87,16 @@ const receiveWebhook = async (req, res) => {
             const payment = await Payment.get({ id });
 
             if (payment.status === 'approved') {
+                console.log('Payment Data Full:', JSON.stringify(payment, null, 2));
+
                 // Mercado Pago returns metadata in snake_case
-                const { user_id, event_id } = payment.metadata;
+                const { user_id, event_id } = payment.metadata || {};
+                console.log('Metadata extracted:', { user_id, event_id });
+
+                if (!user_id || !event_id) {
+                    console.error('Metadata missing user_id or event_id');
+                    return res.sendStatus(200); // Don't crash, just ignore
+                }
 
                 // Verificar si ya existe el ticket para evitar duplicados
                 const ticketExists = await Ticket.findOne({ paymentId: id });
