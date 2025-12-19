@@ -27,6 +27,12 @@ const createPreference = async (req, res) => {
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
+        console.log('Creating Preference with:', {
+            uid: req.uid,
+            eventId,
+            metadata: { user_id: req.uid, event_id: eventId }
+        });
+
         const result = await preference.create({
             body: {
                 items: [
