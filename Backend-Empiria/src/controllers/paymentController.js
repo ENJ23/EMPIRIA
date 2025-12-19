@@ -27,11 +27,8 @@ const createPreference = async (req, res) => {
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
-        console.log('Creating Preference with:', {
-            uid: req.uid,
-            eventId,
-            metadata: { user_id: req.uid, event_id: eventId }
-        });
+        const externalData = { u: req.uid, e: eventId };
+        console.log('Creating Preference with external_reference:', externalData);
 
         const result = await preference.create({
             body: {
@@ -51,10 +48,7 @@ const createPreference = async (req, res) => {
                 },
                 notification_url: process.env.WEBHOOK_URL,
                 auto_return: 'approved',
-                metadata: {
-                    user_id: req.uid, // Snake case for MP
-                    event_id: eventId
-                }
+                external_reference: JSON.stringify(externalData)
             }
         });
 
@@ -118,7 +112,7 @@ const receiveWebhook = async (req, res) => {
                 });
 
                 await ticket.save();
-                console.log(`Ticket creado para usuario ${userId} evento ${eventId}`);
+                console.log(`Ticket creado para usuario ${user_id} evento ${event_id}`);
             }
         }
         res.sendStatus(200);

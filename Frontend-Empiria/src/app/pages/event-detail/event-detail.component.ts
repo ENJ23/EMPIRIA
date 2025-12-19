@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
@@ -28,6 +28,7 @@ export class EventDetailComponent implements OnInit {
 
     private paymentService = inject(PaymentService);
     private cdr = inject(ChangeDetectorRef);
+    private ngZone = inject(NgZone);
 
     constructor(
         private route: ActivatedRoute,
@@ -53,27 +54,36 @@ export class EventDetailComponent implements OnInit {
         if (!this.selectedTicket || !this.eventId) return;
 
         this.isProcessing = true;
-        const quantity = 1; // Simplificado por ahora
+        const quantity = 1;
 
         this.paymentService.createPreference(this.eventId, quantity).subscribe({
-            next: async (res: any) => {
+            next: (res: any) => {
                 this.paymentUrl = res.init_point;
-                try {
-                    this.qrCodeUrl = await QRCode.toDataURL(this.paymentUrl);
-                    this.showPaymentModal = true;
-                    this.isProcessing = false;
-                    this.cdr.detectChanges(); // Force UI update
-                } catch (err) {
-                    console.error('Error generando QR', err);
-                    this.isProcessing = false;
-                    this.cdr.detectChanges();
-                }
+                // Generate QR, then force update inside Zone
+                QRCode.toDataURL(this.paymentUrl)
+                    .then(url => {
+                        this.ngZone.run(() => {
+                            this.qrCodeUrl = url;
+                            this.showPaymentModal = true;
+                            this.isProcessing = false;
+                            this.cdr.detectChanges();
+                        });
+                    })
+                    .catch(err => {
+                        this.ngZone.run(() => {
+                            console.error('Error generando QR', err);
+                            this.isProcessing = false;
+                            this.cdr.detectChanges();
+                        });
+                    });
             },
             error: (err) => {
                 console.error(err);
                 alert('Hubo un error al iniciar el pago. ¿Estás logueado?');
-                this.isProcessing = false;
-                this.cdr.detectChanges();
+                this.ngZone.run(() => {
+                    this.isProcessing = false;
+                    this.cdr.detectChanges();
+                });
             }
         });
     }
