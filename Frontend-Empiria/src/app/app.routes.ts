@@ -5,6 +5,7 @@ import { EventDetailComponent } from './pages/event-detail/event-detail.componen
 import { CalendarComponent } from './pages/calendar/calendar.component';
 import { PromotionsComponent } from './pages/promotions/promotions.component';
 import { ContactComponent } from './pages/contact/contact.component';
+import { TicketDetailComponent } from './pages/ticket-detail/ticket-detail.component';
 import { authGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './pages/admin/login/login.component';
 import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
@@ -19,6 +20,7 @@ export const routes: Routes = [
     { path: 'calendar', component: CalendarComponent },
     { path: 'promociones', component: PromotionsComponent },
     { path: 'contacto', component: ContactComponent },
+    { path: 'tickets/:id', component: TicketDetailComponent },
 
     // Admin Routes
     { path: 'admin/login', component: LoginComponent },

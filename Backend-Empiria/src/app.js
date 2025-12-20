@@ -14,12 +14,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-const paymentRoutes = require('./routes/payment.routes');
-const authRoutes = require('./routes/auth.routes');
-
-app.use('/api/payments', paymentRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/events', require('./routes/events.routes'));
+app.use('/api/payments', require('./routes/payment.routes'));
+app.use('/api/tickets', require('./routes/ticket.routes'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

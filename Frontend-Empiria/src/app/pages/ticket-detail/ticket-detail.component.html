@@ -1,0 +1,48 @@
+<div class="ticket-page" *ngIf="!loading && ticket">
+    <div class="ticket-container">
+        <!-- Header with Cut Line -->
+        <div class="ticket-header">
+            <h2>ENTRADA DIGITAL</h2>
+            <p class="brand">EMPIRIA</p>
+        </div>
+
+        <div class="ticket-body">
+            <div class="event-info">
+                <h3>{{ ticket.event.title }}</h3>
+                <p class="location">
+                    <i class="material-icons">location_on</i>
+                    {{ ticket.event.location }}
+                </p>
+                <p class="date">
+                    <i class="material-icons">event</i>
+                    {{ ticket.event.date | date:'fullDate' }}
+                </p>
+            </div>
+
+            <div class="user-info">
+                <p><strong>Asistente:</strong> {{ ticket.user.name }}</p>
+                <p><strong>Email:</strong> {{ ticket.user.email }}</p>
+                <p class="ticket-id">ID: {{ ticket._id }}</p>
+            </div>
+
+            <div class="qr-section">
+                <img [src]="qrCodeDataUrl" alt="Ticket QR" class="ticket-qr" />
+                <p class="scan-hint">Presenta este código en la entrada</p>
+            </div>
+        </div>
+
+        <!-- Actions (Hidden when printing) -->
+        <div class="actions no-print">
+            <button class="btn-print" (click)="printTicket()">
+                <i class="material-icons">print</i> Imprimir / Guardar PDF
+            </button>
+            <button class="btn-home" routerLink="/">
+                Volver al Inicio
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="loading-container" *ngIf="loading">
+    <p>Cargando tu entrada...</p>
+</div>

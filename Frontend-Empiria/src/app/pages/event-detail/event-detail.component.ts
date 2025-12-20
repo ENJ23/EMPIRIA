@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { TicketService } from '../../core/services/ticket.service';
 import { Event } from '../../core/models/event.model';
 import { Observable, switchMap, tap } from 'rxjs';
 import * as QRCode from 'qrcode';
@@ -14,7 +15,7 @@ import * as QRCode from 'qrcode';
     templateUrl: './event-detail.component.html',
     styleUrl: './event-detail.component.css'
 })
-export class EventDetailComponent implements OnInit {
+export class EventDetailComponent implements OnInit, OnDestroy {
     event$!: Observable<Event | undefined>;
     selectedTicket: string | null = null;
     currentPrice: number = 0;
@@ -26,9 +27,13 @@ export class EventDetailComponent implements OnInit {
     qrCodeUrl = '';
     isProcessing = false;
 
+    private pollingInterval: any;
+
     private paymentService = inject(PaymentService);
+    private ticketService = inject(TicketService);
     private cdr = inject(ChangeDetectorRef);
     private ngZone = inject(NgZone);
+    private router = inject(Router);
 
     constructor(
         private route: ActivatedRoute,
@@ -43,6 +48,10 @@ export class EventDetailComponent implements OnInit {
                 return this.eventService.getEventById(id!);
             })
         );
+    }
+
+    ngOnDestroy() {
+        this.stopPolling();
     }
 
     selectTicket(type: string, price: number) {
@@ -66,6 +75,7 @@ export class EventDetailComponent implements OnInit {
                             this.qrCodeUrl = url;
                             this.showPaymentModal = true;
                             this.isProcessing = false;
+                            this.startPolling(this.eventId!); // Start listening for payment
                             this.cdr.detectChanges();
                         });
                     })
@@ -88,7 +98,40 @@ export class EventDetailComponent implements OnInit {
         });
     }
 
+    startPolling(eventId: string) {
+        this.stopPolling(); // Clear any existing interval
+
+        console.log('Iniciando búsqueda de ticket...');
+        this.pollingInterval = setInterval(() => {
+            this.ticketService.checkTicketStatus(eventId).subscribe({
+                next: (res: any) => {
+                    if (res && res.hasTicket && res.ticketId) {
+                        console.log('¡Ticket confirmado!', res.ticketId);
+                        this.stopPolling();
+                        this.closeModal();
+
+                        this.ngZone.run(() => {
+                            this.router.navigate(['/tickets', res.ticketId]);
+                        });
+                    }
+                },
+                error: (err) => {
+                    // Silent error, keep polling
+                    console.warn('Polling error', err);
+                }
+            });
+        }, 3000); // Check every 3 seconds
+    }
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+    }
+
     closeModal() {
         this.showPaymentModal = false;
+        this.stopPolling(); // Stop checking if user manually closes modal
     }
 }
