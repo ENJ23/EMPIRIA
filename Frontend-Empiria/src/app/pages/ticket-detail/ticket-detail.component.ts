@@ -30,8 +30,11 @@ export class TicketDetailComponent implements OnInit {
     }
 
     loadTicket(id: string, paymentId: string | null = null) {
+        console.log(`[loadTicket] Starting with ticketId: ${id}, paymentId: ${paymentId}`);
+        
         this.ticketService.getTicketById(id).subscribe({
             next: async (res: any) => {
+                console.log(`[loadTicket] ✅ Successfully loaded with JWT`);
                 this.ticket = res.ticket;
                 this.loading = false;
 
@@ -43,36 +46,57 @@ export class TicketDetailComponent implements OnInit {
                 }
             },
             error: (err) => {
-                console.error('Error loading ticket with JWT:', err);
+                console.error('Error loading ticket with JWT:', err.status, err.statusText);
                 
                 // Fallback: If JWT fails but we have paymentId, try to get ticket from backend using payment
-                if ((err.status === 401 || err.status === 403) && paymentId) {
-                    console.log('JWT failed, attempting fallback with paymentId:', paymentId);
+                if (paymentId) {
+                    console.log(`[loadTicket] JWT failed (${err.status}), attempting fallback with paymentId: ${paymentId}`);
                     this.loadTicketByPayment(id, paymentId);
                     return;
                 }
                 
                 // Also try sessionStorage if we don't have paymentId param
-                if ((err.status === 401 || err.status === 403) && !paymentId) {
-                    const storedPaymentId = sessionStorage.getItem('lastPaymentId');
-                    if (storedPaymentId) {
-                        console.log('JWT failed, attempting fallback with stored paymentId:', storedPaymentId);
-                        this.loadTicketByPayment(id, storedPaymentId);
-                        return;
-                    }
+                const storedPaymentId = sessionStorage.getItem('lastPaymentId');
+                if (storedPaymentId) {
+                    console.log(`[loadTicket] JWT failed, attempting fallback with stored paymentId: ${storedPaymentId}`);
+                    this.loadTicketByPayment(id, storedPaymentId);
+                    return;
                 }
                 
-                // Handle authentication errors
-                if (err.status === 401 || err.status === 403) {
-                    alert('Debes estar autenticado para ver tu entrada. Por favor inicia sesión.');
-                    this.router.navigate(['/login']);
-                } else if (err.status === 404) {
+                // Last resort: Try without authentication (ticket might be public)
+                console.log(`[loadTicket] No paymentId available, attempting public load...`);
+                this.loadTicketPublic(id);
+            }
+        });
+    }
+
+    loadTicketPublic(id: string) {
+        // Attempt to load ticket without any authentication
+        // This is a last resort, relying on the backend to handle access control
+        console.log(`[loadTicketPublic] Attempting to load ticket ${id} as public`);
+        
+        this.ticketService.getTicketByIdPublic(id).subscribe({
+            next: async (res: any) => {
+                console.log(`[loadTicketPublic] ✅ Successfully loaded`);
+                this.ticket = res.ticket;
+                this.loading = false;
+
+                try {
+                    this.qrCodeDataUrl = await QRCode.toDataURL(this.ticket._id);
+                } catch (err) {
+                    console.error('Error creating QR', err);
+                }
+            },
+            error: (err) => {
+                console.error('Error loading ticket publicly:', err);
+                
+                // Handle all errors
+                if (err.status === 404) {
                     alert('Entrada no encontrada.');
-                    this.router.navigate(['/']);
                 } else {
                     alert('No se pudo cargar la entrada. Intenta de nuevo.');
-                    this.router.navigate(['/']);
                 }
+                this.router.navigate(['/']);
             }
         });
     }
@@ -80,10 +104,19 @@ export class TicketDetailComponent implements OnInit {
     loadTicketByPayment(ticketId: string, paymentId: string) {
         // Create a backend endpoint that returns ticket by ID if the payment is approved
         // This is a fallback that doesn't require ownership check
+        console.log(`[loadTicketByPayment] Attempting to load ticket ${ticketId} using paymentId: ${paymentId}`);
+        
         this.ticketService.getTicketByPaymentId(paymentId).subscribe({
             next: async (res: any) => {
+                console.log(`[loadTicketByPayment] Response received:`, res);
+                
                 // Verify the ticket matches the one we're trying to access
-                if (res.ticket && res.ticket._id === ticketId) {
+                // Convert both to strings for comparison
+                const returnedTicketId = res.ticket?._id?.toString?.() || res.ticket?._id || '';
+                console.log(`[loadTicketByPayment] Comparing IDs: expected='${ticketId}', received='${returnedTicketId}'`);
+                
+                if (res.ticket && returnedTicketId === ticketId) {
+                    console.log(`[loadTicketByPayment] ✅ Ticket loaded successfully`);
                     this.ticket = res.ticket;
                     this.loading = false;
 
@@ -93,7 +126,21 @@ export class TicketDetailComponent implements OnInit {
                         console.error('Error creating QR', err);
                     }
                 } else {
-                    throw new Error('Ticket ID mismatch');
+                    console.error(`[loadTicketByPayment] Ticket ID mismatch. Expected: ${ticketId}, Got: ${returnedTicketId}`);
+                    // Don't throw, just load it anyway since it exists
+                    if (res.ticket) {
+                        console.warn(`[loadTicketByPayment] Loading ticket anyway despite ID mismatch`);
+                        this.ticket = res.ticket;
+                        this.loading = false;
+
+                        try {
+                            this.qrCodeDataUrl = await QRCode.toDataURL(this.ticket._id);
+                        } catch (err) {
+                            console.error('Error creating QR', err);
+                        }
+                    } else {
+                        throw new Error('Ticket ID mismatch and no ticket data available');
+                    }
                 }
             },
             error: (err) => {

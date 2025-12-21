@@ -2,18 +2,17 @@ const { Router } = require('express');
 const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validate-fields');
 const { validarJWT } = require('../middlewares/validate-jwt');
-const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId } = require('../controllers/ticketController');
+const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketByIdPublic } = require('../controllers/ticketController');
 
 const router = Router();
 
-// Public endpoints (no JWT required)
-// Polling by Payment ID (returns only ticketId)
+// PUBLIC ROUTES (no JWT required) - Must be defined BEFORE /:id
+// These are more specific routes, so they go first
 router.get('/status', checkTicketStatusByPaymentId);
-
-// Get full ticket details by Payment ID (fallback for newly purchased tickets)
 router.get('/by-payment/:paymentId', getTicketByPaymentId);
+router.get('/public/:id', getTicketByIdPublic);
 
-// Back-compat: Allow old path /status/:eventId to work without JWT when paymentId is provided as query param
+// Legacy back-compat: /status/:eventId without JWT if paymentId is in query
 router.get('/status/:eventId', (req, res, next) => {
 	// If client passes paymentId in query, treat it as public polling and bypass JWT
 	if (req.query && req.query.paymentId) {
@@ -23,9 +22,9 @@ router.get('/status/:eventId', (req, res, next) => {
 	return next();
 });
 
-// Authenticated routes (require JWT)
+// AUTHENTICATED ROUTES (require JWT) - Apply middleware then define specific routes
 router.use(validarJWT);
-router.get('/:id', getTicketById);
 router.get('/status/:eventId', checkTicketStatus);
+router.get('/:id', getTicketById);
 
 module.exports = router;

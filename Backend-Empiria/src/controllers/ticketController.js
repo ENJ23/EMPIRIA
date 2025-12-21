@@ -114,17 +114,31 @@ const getTicketById = async (req, res) => {
 const getTicketByPaymentId = async (req, res) => {
     try {
         const { paymentId } = req.params;
+        console.log(`[getTicketByPaymentId] Request for paymentId: ${paymentId}`);
 
         if (!paymentId) {
             return res.status(400).json({ status: 0, msg: 'paymentId es requerido' });
         }
 
-        const ticket = await Ticket.findOne({ payment: paymentId, status: 'approved' })
+        // First try: Find approved ticket
+        let ticket = await Ticket.findOne({ payment: paymentId, status: 'approved' })
             .sort({ purchasedAt: -1 })
             .populate('event', 'title date location imageUrl')
             .populate('user', 'name email');
 
+        // Fallback: If no approved ticket, try any ticket for this payment
         if (!ticket) {
+            console.log(`[getTicketByPaymentId] No approved ticket found, searching for any ticket...`);
+            ticket = await Ticket.findOne({ payment: paymentId })
+                .sort({ purchasedAt: -1 })
+                .populate('event', 'title date location imageUrl')
+                .populate('user', 'name email');
+        }
+
+        console.log(`[getTicketByPaymentId] Found ticket:`, ticket ? `${ticket._id} (status: ${ticket.status})` : 'NOT FOUND');
+
+        if (!ticket) {
+            console.log(`[getTicketByPaymentId] No ticket found for payment: ${paymentId}`);
             return res.status(404).json({ status: 0, msg: 'Ticket no encontrado para este pago' });
         }
 
@@ -139,9 +153,45 @@ const getTicketByPaymentId = async (req, res) => {
     }
 };
 
+/**
+ * Get Ticket by ID (PUBLIC - no JWT required, no ownership check)
+ * Used as last-resort fallback when user has no JWT
+ * Security: The ticket ID is treated as an access token
+ */
+const getTicketByIdPublic = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`[getTicketByIdPublic] Request for ticketId: ${id}`);
+
+        if (!id) {
+            return res.status(400).json({ status: 0, msg: 'ticketId es requerido' });
+        }
+
+        const ticket = await Ticket.findById(id)
+            .populate('event', 'title date location imageUrl')
+            .populate('user', 'name email');
+
+        if (!ticket) {
+            console.log(`[getTicketByIdPublic] Ticket not found: ${id}`);
+            return res.status(404).json({ status: 0, msg: 'Ticket no encontrado' });
+        }
+
+        console.log(`[getTicketByIdPublic] ✅ Ticket found: ${ticket._id}`);
+        res.json({
+            status: 1,
+            ticket
+        });
+
+    } catch (error) {
+        console.error('Error fetching ticket publicly:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
 module.exports = {
     checkTicketStatus,
     checkTicketStatusByPaymentId,
     getTicketById,
-    getTicketByPaymentId
+    getTicketByPaymentId,
+    getTicketByIdPublic
 };

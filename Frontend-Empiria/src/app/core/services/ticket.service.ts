@@ -35,9 +35,17 @@ export class TicketService {
         });
     }
 
+    // Public endpoint: Get ticket by ID without authentication
+    // Used as a fallback when no JWT is available
+    getTicketByIdPublic(ticketId: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/public/${ticketId}`);
+    }
+
     // Fallback: Get ticket details by Payment ID (no JWT required)
     // Used when JWT fails but we have the payment ID from the purchase
     getTicketByPaymentId(paymentId: string): Observable<any> {
-        return this.http.get(`${this.apiUrl}/by-payment/${paymentId}`);
+        const url = `${this.apiUrl}/by-payment/${paymentId}`;
+        console.log(`[TicketService] Calling: ${url}`);
+        return this.http.get(url);
     }
 }
