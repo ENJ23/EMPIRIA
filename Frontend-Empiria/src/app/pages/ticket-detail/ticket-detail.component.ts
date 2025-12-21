@@ -42,8 +42,18 @@ export class TicketDetailComponent implements OnInit {
             },
             error: (err) => {
                 console.error('Error loading ticket', err);
-                alert('No se pudo cargar el ticket. Verifique permisos.');
-                this.router.navigate(['/']);
+                
+                // Handle authentication errors
+                if (err.status === 401 || err.status === 403) {
+                    alert('Debes estar autenticado para ver tu entrada. Por favor inicia sesión.');
+                    this.router.navigate(['/login']);
+                } else if (err.status === 404) {
+                    alert('Entrada no encontrada.');
+                    this.router.navigate(['/']);
+                } else {
+                    alert('No se pudo cargar la entrada. Intenta de nuevo.');
+                    this.router.navigate(['/']);
+                }
             }
         });
     }

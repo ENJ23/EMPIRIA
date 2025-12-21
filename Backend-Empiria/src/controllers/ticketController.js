@@ -74,11 +74,13 @@ const checkTicketStatus = async (req, res) => {
 };
 
 /**
- * Get Ticket Details by ID
+ * Get Ticket Details by ID (AUTHENTICATED - requires JWT)
+ * Only the ticket owner can view their ticket
  */
 const getTicketById = async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.uid; // From JWT
 
         const ticket = await Ticket.findById(id)
             .populate('event', 'title date location imageUrl')
@@ -88,9 +90,9 @@ const getTicketById = async (req, res) => {
             return res.status(404).json({ status: 0, msg: 'Ticket no encontrado' });
         }
 
-        // Security check: Only the owner or admin should view it (skipping admin check for MVP simplicity, just owner)
-        if (ticket.user._id.toString() !== req.uid) {
-            return res.status(401).json({ status: 0, msg: 'No autorizado' });
+        // Security check: Only the owner can view their ticket
+        if (ticket.user._id.toString() !== userId) {
+            return res.status(403).json({ status: 0, msg: 'No autorizado para ver este ticket' });
         }
 
         res.json({

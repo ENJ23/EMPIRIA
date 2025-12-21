@@ -19,9 +19,9 @@ router.get('/status/:eventId', (req, res, next) => {
 	return next();
 });
 
-// Authenticated routes
+// Authenticated routes (require JWT)
 router.use(validarJWT);
-router.get('/status/:eventId', checkTicketStatus);
 router.get('/:id', getTicketById);
+router.get('/status/:eventId', checkTicketStatus);
 
 module.exports = router;
