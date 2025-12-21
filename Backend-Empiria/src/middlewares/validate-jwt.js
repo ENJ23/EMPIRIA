@@ -4,6 +4,11 @@ const validarJWT = (req, res, next) => {
     // x-token headers
     const token = req.header('x-token');
 
+    // Debug headers to see why token might be missing
+    if (!token) {
+        console.log('⚠️ Missing Token. Headers received:', JSON.stringify(req.headers, null, 2));
+    }
+
     if (!token) {
         console.log('validarJWT: No token received in headers');
         return res.status(401).json({

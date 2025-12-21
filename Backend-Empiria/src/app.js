@@ -15,7 +15,17 @@ app.use(express.json());
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
-    .then(() => console.log('✅ Connected to MongoDB'))
+    .then(async () => {
+        console.log('✅ Connected to MongoDB');
+        try {
+            // FIX: Drop the old troublesome index that causes duplicate key errors on null
+            await mongoose.connection.collection('tickets').dropIndex('qrCode_1');
+            console.log('🔥 SUCCESS: Dropped troublesome index "qrCode_1"');
+        } catch (e) {
+            // It might not exist or fail, which is fine
+            console.log('ℹ️ Index cleanup:', e.message);
+        }
+    })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 app.use('/api/auth', require('./routes/auth.routes'));
