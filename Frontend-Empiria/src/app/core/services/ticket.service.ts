@@ -14,6 +14,7 @@ export class TicketService {
 
     checkTicketStatus(eventId: string): Observable<any> {
         const token = this.authService.getToken();
+        console.log('TicketService: Polling with token:', token ? 'Token exists' : 'Token MISSING');
         return this.http.get(`${this.apiUrl}/status/${eventId}`, {
             headers: { 'x-token': token || '' }
         });

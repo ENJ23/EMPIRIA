@@ -9,6 +9,8 @@ const checkTicketStatus = async (req, res) => {
         const { eventId } = req.params;
         const userId = req.uid; // From JWT
 
+        // console.log(`Checking ticket for User: ${userId} Event: ${eventId}`);
+
         // Find the most recent approved ticket for this user and event
         const ticket = await Ticket.findOne({
             user: userId,
@@ -17,6 +19,7 @@ const checkTicketStatus = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         if (ticket) {
+            console.log('✅ Ticket FOUND:', ticket._id);
             return res.json({
                 status: 1,
                 hasTicket: true,
@@ -24,6 +27,7 @@ const checkTicketStatus = async (req, res) => {
             });
         }
 
+        // console.log('❌ Ticket NOT found yet');
         res.json({
             status: 1,
             hasTicket: false
