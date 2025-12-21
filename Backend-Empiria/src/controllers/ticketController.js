@@ -106,8 +106,42 @@ const getTicketById = async (req, res) => {
     }
 };
 
+/**
+ * Get Ticket Details by Payment ID (PUBLIC - no JWT required)
+ * Fallback endpoint when JWT fails but we have the Payment ID
+ * Used immediately after purchase when user is redirected
+ */
+const getTicketByPaymentId = async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+
+        if (!paymentId) {
+            return res.status(400).json({ status: 0, msg: 'paymentId es requerido' });
+        }
+
+        const ticket = await Ticket.findOne({ payment: paymentId, status: 'approved' })
+            .sort({ purchasedAt: -1 })
+            .populate('event', 'title date location imageUrl')
+            .populate('user', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({ status: 0, msg: 'Ticket no encontrado para este pago' });
+        }
+
+        res.json({
+            status: 1,
+            ticket
+        });
+
+    } catch (error) {
+        console.error('Error fetching ticket by payment:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
 module.exports = {
     checkTicketStatus,
     checkTicketStatusByPaymentId,
-    getTicketById
+    getTicketById,
+    getTicketByPaymentId
 };

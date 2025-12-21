@@ -34,4 +34,10 @@ export class TicketService {
             headers: { 'x-token': token || '' }
         });
     }
+
+    // Fallback: Get ticket details by Payment ID (no JWT required)
+    // Used when JWT fails but we have the payment ID from the purchase
+    getTicketByPaymentId(paymentId: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/by-payment/${paymentId}`);
+    }
 }

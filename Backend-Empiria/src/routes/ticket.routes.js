@@ -2,12 +2,16 @@ const { Router } = require('express');
 const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validate-fields');
 const { validarJWT } = require('../middlewares/validate-jwt');
-const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById } = require('../controllers/ticketController');
+const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId } = require('../controllers/ticketController');
 
 const router = Router();
 
-// Public polling endpoint using Payment ID (no JWT)
+// Public endpoints (no JWT required)
+// Polling by Payment ID (returns only ticketId)
 router.get('/status', checkTicketStatusByPaymentId);
+
+// Get full ticket details by Payment ID (fallback for newly purchased tickets)
+router.get('/by-payment/:paymentId', getTicketByPaymentId);
 
 // Back-compat: Allow old path /status/:eventId to work without JWT when paymentId is provided as query param
 router.get('/status/:eventId', (req, res, next) => {

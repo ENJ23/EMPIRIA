@@ -132,8 +132,15 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                         this.stopPolling();
                         this.closeModal();
 
+                        // Store payment_id in sessionStorage for ticket-detail component to use as fallback
+                        if (this.paymentDbId) {
+                            sessionStorage.setItem('lastPaymentId', this.paymentDbId);
+                        }
+
                         this.ngZone.run(() => {
-                            this.router.navigate(['/tickets', res.ticketId]);
+                            this.router.navigate(['/tickets', res.ticketId], {
+                                queryParams: { paymentId: this.paymentDbId }
+                            });
                         });
                     }
                 },
@@ -165,8 +172,14 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                         console.log('✅ ¡Ticket confirmado!', res.ticketId);
                         this.stopPolling();
                         this.closeModal();
+
+                        // Store payment_id in sessionStorage for ticket-detail component to use as fallback
+                        sessionStorage.setItem('lastPaymentId', paymentId);
+
                         this.ngZone.run(() => {
-                            this.router.navigate(['/tickets', res.ticketId]);
+                            this.router.navigate(['/tickets', res.ticketId], {
+                                queryParams: { paymentId: paymentId }
+                            });
                         });
                     }
                 },
