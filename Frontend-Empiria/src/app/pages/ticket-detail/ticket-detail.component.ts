@@ -1,13 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TicketService } from '../../core/services/ticket.service';
 import * as QRCode from 'qrcode';
 
 @Component({
     selector: 'app-ticket-detail',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, RouterModule],
     templateUrl: './ticket-detail.component.html',
     styleUrl: './ticket-detail.component.css'
 })
@@ -50,5 +50,14 @@ export class TicketDetailComponent implements OnInit {
 
     printTicket() {
         window.print();
+    }
+
+    downloadQR() {
+        if (!this.qrCodeDataUrl) return;
+        
+        const link = document.createElement('a');
+        link.href = this.qrCodeDataUrl;
+        link.download = `entrada-${this.ticket._id}.png`;
+        link.click();
     }
 }

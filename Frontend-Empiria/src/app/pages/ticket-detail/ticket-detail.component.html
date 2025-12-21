@@ -1,48 +1,115 @@
 <div class="ticket-page" *ngIf="!loading && ticket">
-    <div class="ticket-container">
-        <!-- Header with Cut Line -->
-        <div class="ticket-header">
-            <h2>ENTRADA DIGITAL</h2>
-            <p class="brand">EMPIRIA</p>
+    <!-- Success Message -->
+    <div class="success-banner">
+        <div class="success-content">
+            <span class="checkmark">✓</span>
+            <h1>¡Entrada Confirmada!</h1>
+            <p>Tu entrada ha sido procesada exitosamente</p>
+        </div>
+    </div>
+
+    <div class="ticket-wrapper">
+        <!-- Ticket Card -->
+        <div class="ticket-container">
+            <!-- Left Section: Event Details -->
+            <div class="ticket-left">
+                <div class="event-banner" [style.background-image]="'url(' + ticket.event.imageUrl + ')'">
+                    <div class="event-overlay"></div>
+                    <div class="event-title-section">
+                        <h2>{{ ticket.event.title }}</h2>
+                    </div>
+                </div>
+
+                <div class="event-details">
+                    <div class="detail-row">
+                        <span class="icon">📅</span>
+                        <div>
+                            <p class="label">Fecha y Hora</p>
+                            <p class="value">{{ ticket.event.date | date:'dd/MM/yyyy' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="icon">📍</span>
+                        <div>
+                            <p class="label">Ubicación</p>
+                            <p class="value">{{ ticket.event.location }}</p>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="detail-row">
+                        <span class="icon">👤</span>
+                        <div>
+                            <p class="label">Asistente</p>
+                            <p class="value">{{ ticket.user.name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="icon">✉️</span>
+                        <div>
+                            <p class="label">Correo Confirmado</p>
+                            <p class="value email">{{ ticket.user.email }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Ticket Number -->
+                    <div class="ticket-number-section">
+                        <p class="label-small">Número de Entrada</p>
+                        <p class="ticket-number">{{ (ticket._id | uppercase).slice(0, 8) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section: QR Code -->
+            <div class="ticket-right">
+                <div class="qr-container">
+                    <img [src]="qrCodeDataUrl" alt="Código QR de Entrada" class="ticket-qr" />
+                    <p class="qr-label">Presenta este código en la entrada</p>
+                </div>
+
+                <!-- Price Badge -->
+                <div class="price-section">
+                    <p class="price-label">Monto Pagado</p>
+                    <p class="price-amount">${{ ticket.amount }}</p>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="status-badge approved">
+                    <span>✓ VÁLIDA</span>
+                </div>
+            </div>
         </div>
 
-        <div class="ticket-body">
-            <div class="event-info">
-                <h3>{{ ticket.event.title }}</h3>
-                <p class="location">
-                    <i class="material-icons">location_on</i>
-                    {{ ticket.event.location }}
-                </p>
-                <p class="date">
-                    <i class="material-icons">event</i>
-                    {{ ticket.event.date | date:'fullDate' }}
-                </p>
-            </div>
+        <!-- Perforated Divider (Visual element) -->
+        <div class="divider-tear"></div>
 
-            <div class="user-info">
-                <p><strong>Asistente:</strong> {{ ticket.user.name }}</p>
-                <p><strong>Email:</strong> {{ ticket.user.email }}</p>
-                <p class="ticket-id">ID: {{ ticket._id }}</p>
-            </div>
-
-            <div class="qr-section">
-                <img [src]="qrCodeDataUrl" alt="Ticket QR" class="ticket-qr" />
-                <p class="scan-hint">Presenta este código en la entrada</p>
-            </div>
-        </div>
-
-        <!-- Actions (Hidden when printing) -->
-        <div class="actions no-print">
+        <!-- Actions Footer -->
+        <div class="ticket-footer no-print">
             <button class="btn-print" (click)="printTicket()">
-                <i class="material-icons">print</i> Imprimir / Guardar PDF
+                <i class="material-icons">print</i>
+                Imprimir / Guardar PDF
+            </button>
+            <button class="btn-download" (click)="downloadQR()">
+                <i class="material-icons">download</i>
+                Descargar Código QR
             </button>
             <button class="btn-home" routerLink="/">
+                <i class="material-icons">home</i>
                 Volver al Inicio
             </button>
+        </div>
+
+        <!-- Info Message -->
+        <div class="info-message no-print">
+            <p><strong>⚡ Consejos:</strong> Guarda tu entrada en tu teléfono o imrime una copia. Presenta tu código QR en la entrada del evento.</p>
         </div>
     </div>
 </div>
 
 <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
     <p>Cargando tu entrada...</p>
 </div>
