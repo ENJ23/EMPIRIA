@@ -130,6 +130,36 @@ img {
 
 .text-gradient {
   background: linear-gradient(90deg, var(--secondary-color), var(--primary-glow));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* Global Print Styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  app-header,
+  app-footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure the ticket page takes full width/height */
+  body,
+  html {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  @page {
+    margin: 0;
+    size: auto;
+  }
 }

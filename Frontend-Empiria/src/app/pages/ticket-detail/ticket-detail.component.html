@@ -1,115 +1,93 @@
 <div class="ticket-page" *ngIf="!loading && ticket">
-    <!-- Success Message -->
-    <div class="success-banner">
-        <div class="success-content">
-            <span class="checkmark">✓</span>
+
+    <!-- Premium Success Animation/Header -->
+    <div class="success-header no-print">
+        <div class="icon-pulse">
+            <span class="material-icons">check_circle</span>
+        </div>
+        <div>
             <h1>¡Entrada Confirmada!</h1>
-            <p>Tu entrada ha sido procesada exitosamente</p>
+            <p>Todo listo para tu experiencia</p>
         </div>
     </div>
 
-    <div class="ticket-wrapper">
-        <!-- Ticket Card -->
-        <div class="ticket-container">
-            <!-- Left Section: Event Details -->
-            <div class="ticket-left">
-                <div class="event-banner" [style.background-image]="'url(' + ticket.event.imageUrl + ')'">
-                    <div class="event-overlay"></div>
-                    <div class="event-title-section">
-                        <h2>{{ ticket.event.title }}</h2>
+    <div class="main-content">
+        <!-- Ticket Card - Designed to look like a physical premium ticket -->
+        <div class="ticket-card">
+            <!-- Left Side: Visuals & Main Info -->
+            <div class="ticket-visual">
+                <div class="event-image" [style.background-image]="'url(' + ticket.event.imageUrl + ')'">
+                    <div class="overlay">
+                        <span class="ticket-type">GENERAL ACCESS</span>
                     </div>
                 </div>
-
-                <div class="event-details">
-                    <div class="detail-row">
-                        <span class="icon">📅</span>
-                        <div>
-                            <p class="label">Fecha y Hora</p>
-                            <p class="value">{{ ticket.event.date | date:'dd/MM/yyyy' }}</p>
+                <div class="event-main-info">
+                    <h2>{{ ticket.event.title }}</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">FECHA</span>
+                            <span class="value">{{ ticket.event.date | date:'dd MMM yyyy' | uppercase }}</span>
+                            <span class="sub-value">{{ ticket.event.date | date:'shortTime' }} HRS</span>
                         </div>
-                    </div>
-
-                    <div class="detail-row">
-                        <span class="icon">📍</span>
-                        <div>
-                            <p class="label">Ubicación</p>
-                            <p class="value">{{ ticket.event.location }}</p>
+                        <div class="info-item">
+                            <span class="label">UBICACIÓN</span>
+                            <span class="value">{{ ticket.event.location }}</span>
                         </div>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="detail-row">
-                        <span class="icon">👤</span>
-                        <div>
-                            <p class="label">Asistente</p>
-                            <p class="value">{{ ticket.user.name }}</p>
-                        </div>
-                    </div>
-
-                    <div class="detail-row">
-                        <span class="icon">✉️</span>
-                        <div>
-                            <p class="label">Correo Confirmado</p>
-                            <p class="value email">{{ ticket.user.email }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Ticket Number -->
-                    <div class="ticket-number-section">
-                        <p class="label-small">Número de Entrada</p>
-                        <p class="ticket-number">{{ (ticket._id | uppercase).slice(0, 8) }}</p>
                     </div>
                 </div>
+                <!-- Perforated Line Visual -->
+                <div class="perforation"></div>
             </div>
 
-            <!-- Right Section: QR Code -->
-            <div class="ticket-right">
-                <div class="qr-container">
-                    <img [src]="qrCodeDataUrl" alt="Código QR de Entrada" class="ticket-qr" />
-                    <p class="qr-label">Presenta este código en la entrada</p>
+            <!-- Right Side (or Bottom on mobile): QR & Validation -->
+            <div class="ticket-validation">
+                <div class="ticket-header-small">
+                    <span class="brand">EMPIRIA</span>
+                    <span class="ticket-id">#{{ (ticket._id | uppercase).slice(0, 8) }}</span>
                 </div>
 
-                <!-- Price Badge -->
-                <div class="price-section">
-                    <p class="price-label">Monto Pagado</p>
-                    <p class="price-amount">${{ ticket.amount }}</p>
+                <div class="qr-wrapper">
+                    <img [src]="qrCodeDataUrl" alt="QR de Entrada" class="qr-code" />
                 </div>
 
-                <!-- Status Badge -->
-                <div class="status-badge approved">
-                    <span>✓ VÁLIDA</span>
+                <div class="attendee-info">
+                    <p class="attendee-name">{{ ticket.user.name }}</p>
+                    <p class="attendee-email">{{ ticket.user.email }}</p>
+                </div>
+
+                <div class="ticket-footer-status">
+                    <div class="status-pill approved">
+                        <span class="material-icons">verified</span> VÁLIDA
+                    </div>
+                    <div class="price-tag">
+                        ${{ ticket.amount }}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Perforated Divider (Visual element) -->
-        <div class="divider-tear"></div>
-
-        <!-- Actions Footer -->
-        <div class="ticket-footer no-print">
-            <button class="btn-print" (click)="printTicket()">
-                <i class="material-icons">print</i>
-                Imprimir / Guardar PDF
+        <!-- Actions -->
+        <div class="actions-panel no-print">
+            <button class="btn btn-primary" (click)="printTicket()">
+                <span class="material-icons">print</span>
+                Imprimir Entrada
             </button>
-            <button class="btn-download" (click)="downloadQR()">
-                <i class="material-icons">download</i>
-                Descargar Código QR
+            <button class="btn btn-outline" (click)="downloadQR()">
+                <span class="material-icons">download</span>
+                Descargar QR
             </button>
-            <button class="btn-home" routerLink="/">
-                <i class="material-icons">home</i>
+            <button class="btn btn-text" routerLink="/">
+                <span class="material-icons">arrow_back</span>
                 Volver al Inicio
             </button>
         </div>
 
-        <!-- Info Message -->
-        <div class="info-message no-print">
-            <p><strong>⚡ Consejos:</strong> Guarda tu entrada en tu teléfono o imrime una copia. Presenta tu código QR en la entrada del evento.</p>
+        <div class="advisory-text no-print">
+            <p>Presenta el código QR en la entrada directamente desde tu celular o impreso.</p>
         </div>
     </div>
 </div>
 
 <div class="loading-container" *ngIf="loading">
     <div class="spinner"></div>
-    <p>Cargando tu entrada...</p>
 </div>
