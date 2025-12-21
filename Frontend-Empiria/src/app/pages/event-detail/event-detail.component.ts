@@ -26,6 +26,7 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     paymentUrl = '';
     qrCodeUrl = '';
     isProcessing = false;
+    private paymentDbId: string | null = null; // Payment _id returned by backend
 
     private pollingInterval: any;
     private pollingStartTime: number = 0;
@@ -71,6 +72,7 @@ export class EventDetailComponent implements OnInit, OnDestroy {
         this.paymentService.createPreference(this.eventId, quantity, ticketType).subscribe({
             next: (res: any) => {
                 this.paymentUrl = res.init_point;
+            this.paymentDbId = res.payment_id || null;
                 // Generate QR, then force update inside Zone
                 QRCode.toDataURL(this.paymentUrl)
                     .then(url => {
@@ -78,7 +80,13 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                             this.qrCodeUrl = url;
                             this.showPaymentModal = true;
                             this.isProcessing = false;
-                            this.startPolling(this.eventId!); // Start listening for payment
+                            // Prefer polling by Payment ID (does not require JWT)
+                            if (this.paymentDbId) {
+                                this.startPollingByPayment(this.paymentDbId);
+                            } else if (this.eventId) {
+                                // Fallback to legacy polling by event (requires JWT)
+                                this.startPolling(this.eventId);
+                            }
                             this.cdr.detectChanges();
                         });
                     })
@@ -135,6 +143,38 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                 }
             });
         }, 5000); // Check every 5 seconds (increased from 3 to avoid overwhelming the server)
+    }
+
+    startPollingByPayment(paymentId: string) {
+        this.stopPolling();
+        this.pollingStartTime = Date.now();
+        console.log('🔄 Iniciando búsqueda de ticket por Payment ID...');
+        this.pollingInterval = setInterval(() => {
+            const elapsedTime = Date.now() - this.pollingStartTime;
+            if (elapsedTime > this.maxPollingDuration) {
+                console.error('❌ Polling timeout - Máximo tiempo de espera alcanzado');
+                this.stopPolling();
+                this.closeModal();
+                alert('El tiempo de espera para confirmar el pago ha expirado. Por favor, verifica tu estado de pago.');
+                return;
+            }
+
+            this.ticketService.checkTicketStatusByPayment(paymentId).subscribe({
+                next: (res: any) => {
+                    if (res && res.hasTicket && res.ticketId) {
+                        console.log('✅ ¡Ticket confirmado!', res.ticketId);
+                        this.stopPolling();
+                        this.closeModal();
+                        this.ngZone.run(() => {
+                            this.router.navigate(['/tickets', res.ticketId]);
+                        });
+                    }
+                },
+                error: (err) => {
+                    console.warn('⚠️ Polling error (paymentId)', err);
+                }
+            });
+        }, 5000);
     }
 
     stopPolling() {

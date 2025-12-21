@@ -230,8 +230,16 @@ const receiveWebhook = async (req, res) => {
                 purchasedAt: new Date()
             });
 
-            await ticket.save();
-            console.log(`[webhook] ✅ Ticket created: ${ticket._id} for User: ${userId}, Event: ${eventId}`);
+            try {
+                await ticket.save();
+                console.log(`[webhook] ✅ Ticket created: ${ticket._id} for User: ${userId}, Event: ${eventId}`);
+            } catch (e) {
+                if (e && e.code === 11000) {
+                    console.warn('[webhook] Duplicate ticket creation attempted, ignoring.');
+                } else {
+                    throw e;
+                }
+            }
         } else {
             console.log(`[webhook] Payment status is '${mpPaymentData.status}', not creating ticket`);
         }

@@ -9,9 +9,23 @@ mongoose.connect(uri)
     .then(async () => {
         console.log('✅ Connected.');
         try {
-            console.log('Attempting to drop index "qrCode_1"...');
-            await mongoose.connection.collection('tickets').dropIndex('qrCode_1');
-            console.log('🔥 SUCCESS: Index dropped.');
+            // Drop legacy unique index on paymentId if present to avoid duplicate key errors
+            try {
+                console.log('Attempting to drop index "paymentId_1"...');
+                await mongoose.connection.collection('tickets').dropIndex('paymentId_1');
+                console.log('🔥 SUCCESS: paymentId_1 index dropped.');
+            } catch (e) {
+                console.log('ℹ️ paymentId_1 info:', e.message);
+            }
+
+            // Optionally drop old qrCode index if exists
+            try {
+                console.log('Attempting to drop index "qrCode_1"...');
+                await mongoose.connection.collection('tickets').dropIndex('qrCode_1');
+                console.log('🔥 SUCCESS: qrCode_1 index dropped.');
+            } catch (e) {
+                console.log('ℹ️ qrCode_1 info:', e.message);
+            }
         } catch (e) {
             console.log('ℹ️ Information:', e.message);
         } finally {

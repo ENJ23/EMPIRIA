@@ -12,6 +12,14 @@ export class TicketService {
     private authService = inject(AuthService);
     private apiUrl = `${environment.apiUrl}/tickets`;
 
+    // New: Public polling by Payment DB id (no JWT required)
+    checkTicketStatusByPayment(paymentId: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/status`, {
+            params: { paymentId }
+        });
+    }
+
+    // Legacy: Authenticated polling by event (kept for compatibility)
     checkTicketStatus(eventId: string): Observable<any> {
         const token = this.authService.getToken();
         console.log('TicketService: Polling with token:', token ? 'Token exists' : 'Token MISSING');

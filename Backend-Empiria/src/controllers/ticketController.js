@@ -1,6 +1,40 @@
 const Ticket = require('../models/Ticket');
 
 /**
+ * Public: Check ticket status by Payment record ID (no JWT required)
+ * GET /api/tickets/status?paymentId=<Payment._id>
+ * Optional legacy support: mpPaymentId=<MercadoPago payment id>
+ */
+const checkTicketStatusByPaymentId = async (req, res) => {
+    try {
+        const { paymentId, mpPaymentId } = req.query;
+
+        if (!paymentId && !mpPaymentId) {
+            return res.status(400).json({ status: 0, msg: 'paymentId (o mpPaymentId) es requerido' });
+        }
+
+        // Prefer primary relationship by Payment._id
+        let ticket = null;
+        if (paymentId) {
+            ticket = await Ticket.findOne({ payment: paymentId, status: 'approved' }).sort({ purchasedAt: -1 });
+        }
+
+        // Legacy fallback using Mercado Pago payment id stored in legacy field paymentId
+        if (!ticket && mpPaymentId) {
+            ticket = await Ticket.findOne({ paymentId: String(mpPaymentId), status: 'approved' }).sort({ purchasedAt: -1 });
+        }
+
+        if (ticket) {
+            return res.json({ status: 1, hasTicket: true, ticketId: ticket._id });
+        }
+        return res.json({ status: 1, hasTicket: false });
+    } catch (error) {
+        console.error('Error checking ticket by paymentId:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
+/**
  * Check if the user has a ticket for a specific event
  * Used for polling from the frontend
  */
@@ -72,5 +106,6 @@ const getTicketById = async (req, res) => {
 
 module.exports = {
     checkTicketStatus,
+    checkTicketStatusByPaymentId,
     getTicketById
 };
