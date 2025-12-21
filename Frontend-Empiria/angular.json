@@ -32,10 +32,7 @@
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
-            "prerender": {
-              "discoverRoutes": false,
-              "routes": []
-            },
+            "prerender": false,
             "ssr": {
               "entry": "src/server.ts"
             }
