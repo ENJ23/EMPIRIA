@@ -4,22 +4,32 @@ const TicketSchema = Schema({
     user: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true
     },
     event: {
         type: Schema.Types.ObjectId,
         ref: 'Event',
-        required: true
+        required: true,
+        index: true
     },
+    payment: {
+        type: Schema.Types.ObjectId,
+        ref: 'Payment',
+        required: true,
+        unique: true,
+        index: true
+    },
+    // Legacy field for backwards compatibility (will be removed)
     paymentId: {
         type: String,
-        required: true,
-        unique: true
+        sparse: true
     },
     status: {
         type: String,
         enum: ['approved', 'pending', 'rejected'],
-        default: 'pending'
+        default: 'pending',
+        index: true
     },
     amount: {
         type: Number,
@@ -27,7 +37,8 @@ const TicketSchema = Schema({
     },
     purchasedAt: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        index: true
     },
     entryQr: {
         type: String,
@@ -35,5 +46,9 @@ const TicketSchema = Schema({
         unique: true
     }
 });
+
+// Índices compuestos
+TicketSchema.index({ user: 1, event: 1 });
+TicketSchema.index({ user: 1, status: 1 });
 
 module.exports = model('Ticket', TicketSchema);

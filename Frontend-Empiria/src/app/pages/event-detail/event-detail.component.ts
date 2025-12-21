@@ -28,6 +28,8 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     isProcessing = false;
 
     private pollingInterval: any;
+    private pollingStartTime: number = 0;
+    private maxPollingDuration: number = 300000; // 5 minutes in milliseconds
 
     private paymentService = inject(PaymentService);
     private ticketService = inject(TicketService);
@@ -64,8 +66,9 @@ export class EventDetailComponent implements OnInit, OnDestroy {
 
         this.isProcessing = true;
         const quantity = 1;
+        const ticketType = this.selectedTicket; // Send the selected ticket type
 
-        this.paymentService.createPreference(this.eventId, quantity).subscribe({
+        this.paymentService.createPreference(this.eventId, quantity, ticketType).subscribe({
             next: (res: any) => {
                 this.paymentUrl = res.init_point;
                 // Generate QR, then force update inside Zone
@@ -101,12 +104,23 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     startPolling(eventId: string) {
         this.stopPolling(); // Clear any existing interval
 
-        console.log('Iniciando búsqueda de ticket...');
+        this.pollingStartTime = Date.now();
+        console.log('🔄 Iniciando búsqueda de ticket...');
         this.pollingInterval = setInterval(() => {
+            // Check if we've exceeded the maximum polling duration
+            const elapsedTime = Date.now() - this.pollingStartTime;
+            if (elapsedTime > this.maxPollingDuration) {
+                console.error('❌ Polling timeout - Máximo tiempo de espera alcanzado');
+                this.stopPolling();
+                this.closeModal();
+                alert('El tiempo de espera para confirmar el pago ha expirado. Por favor, verifica tu estado de pago.');
+                return;
+            }
+
             this.ticketService.checkTicketStatus(eventId).subscribe({
                 next: (res: any) => {
                     if (res && res.hasTicket && res.ticketId) {
-                        console.log('¡Ticket confirmado!', res.ticketId);
+                        console.log('✅ ¡Ticket confirmado!', res.ticketId);
                         this.stopPolling();
                         this.closeModal();
 
@@ -117,10 +131,10 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                 },
                 error: (err) => {
                     // Silent error, keep polling
-                    console.warn('Polling error', err);
+                    console.warn('⚠️ Polling error', err);
                 }
             });
-        }, 3000); // Check every 3 seconds
+        }, 5000); // Check every 5 seconds (increased from 3 to avoid overwhelming the server)
     }
 
     stopPolling() {

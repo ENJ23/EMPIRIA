@@ -1,0 +1,184 @@
+```
+📦 ESTRUCTURA DE CAMBIOS - SISTEMA DE PAGOS MERCADO PAGO
+═══════════════════════════════════════════════════════════════════════════════
+
+Pagina Web - Empiria Jujuy/
+│
+├── 📄 LEEME_PRIMERO.md ........................ ⭐ EMPIEZA AQUÍ (2 min)
+├── 📄 INICIO_AQUI.txt ........................ 📊 Resumen visual
+├── 📄 INDEX.md .............................. 🗂️  Índice completo
+├── 📄 RESUMEN_FINAL.md ...................... 📋 Detalles técnicos
+├── 📄 CAMBIOS_IMPLEMENTADOS.md .............. 🔧 Qué cambió
+├── 📄 DEPLOYMENT_CHECKLIST.md ............... 🚀 Cómo deployar
+├── 📄 GUIA_PAGOS.md ......................... 📘 Manual completo
+│
+├── Backend-Empiria/
+│   ├── 📄 DEBUG_WEBHOOK.md ................. 🔍 Debugging webhooks
+│   ├── 📄 VERIFICAR_CAMBIOS.sh ............. ✅ Script de verificación
+│   ├── 📄 test-payment-request-v2.js ....... 🧪 Test mejorado
+│   │
+│   ├── src/
+│   │   ├── controllers/
+│   │   │   └── ✨ paymentController.js .... ✅ REESCRITO (252 líneas)
+│   │   │       • Nuevo: createPreference con Payment
+│   │   │       • Nuevo: receiveWebhook mejorado
+│   │   │       • Nuevo: Logging detallado
+│   │   │       • Nuevo: Validación de usuario
+│   │   │
+│   │   └── models/
+│   │       ├── ✨ Payment.js .............. ✅ MEJORADO (95 líneas)
+│   │       │   • Antes: 8 campos básicos
+│   │       │   • Ahora: 20 campos completos
+│   │       │   • Nuevo: webhookReceivedAt, approvedAt
+│   │       │   • Nuevo: lastWebhookData
+│   │       │   • Nuevo: Índices compuestos
+│   │       │
+│   │       ├── ✨ Ticket.js .............. ✅ ACTUALIZADO (55 líneas)
+│   │       │   • Nuevo: campo payment (relación a Payment)
+│   │       │   • Mantiene: paymentId (legacy)
+│   │       │   • Nuevo: Índices compuestos
+│   │       │
+│   │       ├── Client.js ................. ❌ Sin cambios
+│   │       ├── Event.js .................. ❌ Sin cambios
+│   │       ├── User.js ................... ❌ Sin cambios
+│   │       └── (others) .................. ❌ Sin cambios
+│   │
+│   ├── routes/
+│   │   └── payment.routes.js .............. ❌ Sin cambios (ya estaba bien)
+│   │
+│   ├── middlewares/
+│   │   └── (others) ........................ ❌ Sin cambios
+│   │
+│   ├── .env ................................ ℹ️  Verificar WEBHOOK_URL
+│   ├── package.json ........................ ❌ Sin cambios
+│   └── (otros archivos)
+│
+├── Frontend-Empiria/
+│   ├── src/
+│   │   └── app/
+│   │       ├── core/services/
+│   │       │   └── ✨ payment.service.ts ... ✅ ACTUALIZADO
+│   │       │       • Nuevo parámetro: ticketType
+│   │       │       • Ahora: 1 método (updateizado)
+│   │       │
+│   │       └── pages/event-detail/
+│   │           └── ✨ event-detail.component.ts ✅ ACTUALIZADO
+│   │               • Nuevo: pollingStartTime
+│   │               • Nuevo: maxPollingDuration (5 min)
+│   │               • Actualizado: purchase() con ticketType
+│   │               • Actualizado: startPolling() con timeout
+│   │               • Nuevo: Logging mejorado
+│   │
+│   └── (resto sin cambios) ................. ❌ Sin cambios
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 ESTADÍSTICAS DE CAMBIOS
+
+Archivos modificados:     5
+Archivos nuevos:          8 (documentación + test)
+Líneas de código:         +350 (improvements)
+Modelos mejorados:        2
+Campos agregados:         12+
+Índices BD:              6
+Documentación creada:    5 archivos
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST DE ARCHIVOS
+
+BACKEND:
+  ✅ paymentController.js ........ REESCRITO
+  ✅ Payment.js .................. MEJORADO
+  ✅ Ticket.js ................... ACTUALIZADO
+  ✅ payment.routes.js ........... OK (sin cambios)
+  ✅ .env ........................ VERIFICAR WEBHOOK_URL
+
+FRONTEND:
+  ✅ payment.service.ts .......... ACTUALIZADO
+  ✅ event-detail.component.ts ... ACTUALIZADO
+  ✅ (resto) ..................... OK (sin cambios)
+
+TESTS:
+  ✅ test-payment-request-v2.js .. NUEVO
+
+DOCUMENTACIÓN:
+  ✅ LEEME_PRIMERO.md ............ NUEVO
+  ✅ INICIO_AQUI.txt ............. NUEVO
+  ✅ INDEX.md .................... NUEVO
+  ✅ RESUMEN_FINAL.md ............ NUEVO
+  ✅ CAMBIOS_IMPLEMENTADOS.md .... NUEVO
+  ✅ DEPLOYMENT_CHECKLIST.md ..... NUEVO
+  ✅ GUIA_PAGOS.md ............... NUEVO
+  ✅ DEBUG_WEBHOOK.md ............ NUEVO
+  ✅ VERIFICAR_CAMBIOS.sh ........ NUEVO
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 ARCHIVOS CLAVE A REVISAR
+
+1. LEEME_PRIMERO.md
+   └─> 2 minutos
+   └─> Resumen ejecutivo
+   └─> Next steps
+
+2. RESUMEN_FINAL.md
+   └─> 10 minutos
+   └─> Detalles técnicos
+   └─> Explicación de cambios
+
+3. paymentController.js
+   └─> 15 minutos
+   └─> Código reescrito
+   └─> Webhook + createPreference
+
+4. Payment.js
+   └─> 5 minutos
+   └─> Nuevo modelo mejorado
+   └─> Todos los campos
+
+5. DEPLOYMENT_CHECKLIST.md
+   └─> 5 minutos
+   └─> Pasos para deployar
+   └─> Verificaciones
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📈 CAMBIOS ANTES vs DESPUÉS
+
+ANTES:
+  Frontend → Backend (createPreference)
+           → Mercado Pago
+           ❌ Webhook no procesa
+           ❌ Ticket nunca se crea
+           ❌ Polling nunca encuentra nada
+
+DESPUÉS:
+  Frontend → Backend (createPreference)
+           → Payment (pending)
+           → Mercado Pago
+           → Webhook
+           → Payment (approved)
+           ✅ Ticket created
+           ✅ Polling encuentra ticket
+           ✅ Usuario redirigido
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 DEPLOYMENT RÁPIDO
+
+git add .
+git commit -m "fix: Sistema de pagos Mercado Pago"
+git push origin main
+
+→ Vercel despliega automáticamente
+→ Listo en 2-3 minutos
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: ✅ TODO COMPLETADO Y DOCUMENTADO
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Próximo paso:** Abre `LEEME_PRIMERO.md` o `INDEX.md`

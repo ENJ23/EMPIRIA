@@ -12,11 +12,11 @@ export class PaymentService {
     private authService = inject(AuthService);
     private apiUrl = `${environment.apiUrl}/payments`;
 
-    createPreference(eventId: string, quantity: number): Observable<any> {
+    createPreference(eventId: string, quantity: number, ticketType: string = 'general'): Observable<any> {
         const token = this.authService.getToken();
 
         return this.http.post(`${this.apiUrl}/create-preference`,
-            { eventId, quantity },
+            { eventId, quantity, ticketType },
             { headers: { 'x-token': token || '' } }
         );
     }

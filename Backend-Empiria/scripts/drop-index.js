@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-require('dotenv').config({ path: '../Backend-Empiria/.env' });
+require('dotenv').config(); 
 
-// Adjust path to .env if needed, or rely on default process.env if run from root with env vars
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria';
 
 console.log('Connecting to MongoDB at:', uri);
