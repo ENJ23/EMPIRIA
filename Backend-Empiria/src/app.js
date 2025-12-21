@@ -6,7 +6,11 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+// Middleware
+app.use(cors({
+    origin: '*',
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-token']
+}));
 app.use(express.json());
 
 // Database Connection

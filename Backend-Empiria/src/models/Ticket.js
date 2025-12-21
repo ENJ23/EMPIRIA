@@ -29,8 +29,10 @@ const TicketSchema = Schema({
         type: Date,
         default: Date.now
     },
-    qrCode: {
-        type: String // Optional: Store generated QR code for entry (backend generated)
+    entryQr: {
+        type: String,
+        sparse: true,
+        unique: true
     }
 });
 
