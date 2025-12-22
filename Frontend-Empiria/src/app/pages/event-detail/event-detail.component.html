@@ -82,6 +82,21 @@
                     </div>
                 </div>
 
+                <!-- Inline error alert for capacity/availability issues -->
+                <div class="alert error" *ngIf="purchaseErrorMsg">
+                    <span class="material-icons">error</span>
+                    <div class="alert-content">
+                        <strong>{{ purchaseErrorMsg }}</strong>
+                        <div class="alert-sub" *ngIf="purchaseErrorDetails.available !== undefined && !purchaseErrorDetails.soldOut">
+                            Quedan {{ purchaseErrorDetails.available }}
+                            {{ purchaseErrorDetails.available === 1 ? 'entrada' : 'entradas' }} disponibles.
+                        </div>
+                        <div class="alert-sub" *ngIf="purchaseErrorDetails.soldOut">
+                            No hay más entradas disponibles para este evento.
+                        </div>
+                    </div>
+                </div>
+
                 <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing || isSoldOut" (click)="purchase()">
                     {{ isSoldOut ? 'Entradas Agotadas' : isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
                 </button>

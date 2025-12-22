@@ -188,6 +188,36 @@
     gap: 5px;
 }
 
+/* Inline Alert Styles */
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    margin-top: 10px;
+}
+
+.alert.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.alert .material-icons {
+    color: #F44336;
+    font-size: 1.1rem;
+}
+
+.alert-content strong {
+    color: #F44336;
+    font-weight: 700;
+}
+
+.alert-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 /* Availability Status */
 .availability-status {
     display: flex;

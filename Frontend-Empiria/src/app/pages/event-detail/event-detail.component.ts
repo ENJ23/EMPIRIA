@@ -32,6 +32,10 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     isProcessing = false;
     private paymentDbId: string | null = null; // Payment _id returned by backend
 
+    // UI Error State for purchase
+    purchaseErrorMsg: string | null = null;
+    purchaseErrorDetails: { available?: number; requested?: number; soldOut?: boolean } = {};
+
     private pollingInterval: any;
     private pollingStartTime: number = 0;
     private maxPollingDuration: number = 300000; // 5 minutes in milliseconds
@@ -75,6 +79,9 @@ export class EventDetailComponent implements OnInit, OnDestroy {
         if (this.isSoldOut) return;
         this.selectedTicket = type;
         this.currentPrice = price;
+        // Reset any previous purchase error when user changes selection
+        this.purchaseErrorMsg = null;
+        this.purchaseErrorDetails = {};
     }
 
     purchase() {
@@ -86,6 +93,9 @@ export class EventDetailComponent implements OnInit, OnDestroy {
 
         this.paymentService.createPreference(this.eventId, quantity, ticketType).subscribe({
             next: (res: any) => {
+                // Clear any prior errors on success
+                this.purchaseErrorMsg = null;
+                this.purchaseErrorDetails = {};
                 this.paymentUrl = res.init_point;
             this.paymentDbId = res.payment_id || null;
                 // Generate QR, then force update inside Zone
@@ -114,8 +124,21 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                     });
             },
             error: (err) => {
-                console.error(err);
-                alert('Hubo un error al iniciar el pago. ¿Estás logueado?');
+                console.error('Error al iniciar el pago:', err);
+                // Parse backend-provided error details for a friendly UI message
+                const serverError = err?.error;
+                let msg = 'No se pudo iniciar el pago.';
+                const details: { available?: number; requested?: number; soldOut?: boolean } = {};
+                if (serverError && typeof serverError === 'object') {
+                    if (serverError.msg) msg = serverError.msg;
+                    if (typeof serverError.available === 'number') details.available = serverError.available;
+                    if (typeof serverError.requested === 'number') details.requested = serverError.requested;
+                    if (typeof serverError.soldOut === 'boolean') details.soldOut = serverError.soldOut;
+                } else if (typeof serverError === 'string') {
+                    msg = serverError;
+                }
+                this.purchaseErrorMsg = msg;
+                this.purchaseErrorDetails = details;
                 this.ngZone.run(() => {
                     this.isProcessing = false;
                     this.cdr.detectChanges();
