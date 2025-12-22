@@ -188,6 +188,68 @@
     gap: 5px;
 }
 
+/* Availability Status */
+.availability-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s ease;
+}
+
+.availability-status.sold-out {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.availability-status .material-icons {
+    font-size: 1.2rem;
+    color: #4CAF50;
+}
+
+.availability-status.sold-out .material-icons {
+    color: #F44336;
+    animation: pulse 2s infinite;
+}
+
+.availability-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.available-count {
+    color: #4CAF50;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.sold-out-text {
+    color: #F44336;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+.ticket-type.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;

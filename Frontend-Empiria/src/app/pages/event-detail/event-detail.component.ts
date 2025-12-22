@@ -21,6 +21,10 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     currentPrice: number = 0;
     eventId: string | null = null;
 
+    // Ticket availability
+    availableTickets: number = 0;
+    isSoldOut: boolean = false;
+
     // Payment State
     showPaymentModal = false;
     paymentUrl = '';
@@ -49,6 +53,15 @@ export class EventDetailComponent implements OnInit, OnDestroy {
             switchMap(params => {
                 const id = params.get('id');
                 return this.eventService.getEventById(id!);
+            }),
+            tap((event: any) => {
+                // Calculate available tickets
+                if (event) {
+                    const ticketsSold = event.ticketsSold || 0;
+                    this.availableTickets = event.capacity - ticketsSold;
+                    this.isSoldOut = this.availableTickets <= 0;
+                    console.log(`📊 Event capacity: ${event.capacity}, Sold: ${ticketsSold}, Available: ${this.availableTickets}`);
+                }
             })
         );
     }
@@ -58,6 +71,8 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     }
 
     selectTicket(type: string, price: number) {
+        // Prevent selection if sold out
+        if (this.isSoldOut) return;
         this.selectedTicket = type;
         this.currentPrice = price;
     }

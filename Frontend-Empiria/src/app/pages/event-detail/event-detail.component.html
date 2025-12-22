@@ -40,7 +40,20 @@
             <div class="ticket-card">
                 <h3>Adquirir Entradas</h3>
 
-                <div class="ticket-type" [class.selected]="selectedTicket === 'general'"
+                <!-- Availability Status -->
+                <div class="availability-status" [class.sold-out]="isSoldOut">
+                    <span class="material-icons">{{ isSoldOut ? 'block' : 'inventory_2' }}</span>
+                    <div class="availability-text">
+                        <span *ngIf="!isSoldOut" class="available-count">
+                            {{ availableTickets }} {{ availableTickets === 1 ? 'entrada disponible' : 'entradas disponibles' }}
+                        </span>
+                        <span *ngIf="isSoldOut" class="sold-out-text">
+                            ⚠️ ENTRADAS AGOTADAS
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ticket-type" [class.selected]="selectedTicket === 'general'" [class.disabled]="isSoldOut"
                     (click)="selectTicket('general', event.priceRange.min)">
                     <div class="ticket-info">
                         <span class="ticket-name">General</span>
@@ -49,7 +62,7 @@
                     <span class="ticket-price">${{ event.priceRange.min }}</span>
                 </div>
 
-                <div class="ticket-type" [class.selected]="selectedTicket === 'vip'"
+                <div class="ticket-type" [class.selected]="selectedTicket === 'vip'" [class.disabled]="isSoldOut"
                     (click)="selectTicket('vip', event.priceRange.max)">
                     <div class="ticket-info">
                         <span class="ticket-name">VIP Experience</span>
@@ -69,8 +82,8 @@
                     </div>
                 </div>
 
-                <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing" (click)="purchase()">
-                    {{ isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
+                <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing || isSoldOut" (click)="purchase()">
+                    {{ isSoldOut ? 'Entradas Agotadas' : isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
                 </button>
                 <p class="secure-note">
                     <span class="material-icons">lock</span> Pago 100% Seguro

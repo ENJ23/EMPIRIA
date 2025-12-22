@@ -35,6 +35,27 @@ const createPreference = async (req, res) => {
             return res.status(404).json({ status: 0, msg: 'Evento no encontrado' });
         }
 
+        // Verificar capacidad del evento
+        const availableTickets = event.capacity - (event.ticketsSold || 0);
+        if (availableTickets <= 0) {
+            return res.status(400).json({ 
+                status: 0, 
+                msg: 'Entradas agotadas para este evento',
+                available: 0,
+                soldOut: true
+            });
+        }
+
+        // Verificar que la cantidad solicitada no exceda la disponibilidad
+        if (quantity > availableTickets) {
+            return res.status(400).json({ 
+                status: 0, 
+                msg: `Solo hay ${availableTickets} entrada(s) disponible(s)`,
+                available: availableTickets,
+                requested: quantity
+            });
+        }
+
         // Verificar que el usuario exista
         const user = await User.findById(userId);
         if (!user) {
@@ -209,7 +230,7 @@ const receiveWebhook = async (req, res) => {
         await paymentRecord.save();
         console.log(`[webhook] Payment record updated: ${paymentRecord._id}, Status: ${mpPaymentData.status}`);
 
-        // If payment is approved, create a Ticket
+        // If payment is approved, create a Ticket and increment ticketsSold
         if (mpPaymentData.status === 'approved') {
             // Check if ticket already exists for this payment
             const ticketExists = await Ticket.findOne({ payment: paymentRecord._id });
@@ -233,6 +254,14 @@ const receiveWebhook = async (req, res) => {
             try {
                 await ticket.save();
                 console.log(`[webhook] ✅ Ticket created: ${ticket._id} for User: ${userId}, Event: ${eventId}`);
+                
+                // Increment ticketsSold for the event
+                await Event.findByIdAndUpdate(
+                    eventId,
+                    { $inc: { ticketsSold: 1 } },
+                    { new: true }
+                );
+                console.log(`[webhook] ✅ Event ticketsSold incremented for event: ${eventId}`);
             } catch (e) {
                 if (e && e.code === 11000) {
                     console.warn('[webhook] Duplicate ticket creation attempted, ignoring.');
