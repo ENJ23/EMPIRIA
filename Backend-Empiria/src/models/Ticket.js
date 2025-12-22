@@ -50,5 +50,9 @@ const TicketSchema = Schema({
 // Índices compuestos
 TicketSchema.index({ user: 1, event: 1 });
 TicketSchema.index({ user: 1, status: 1 });
+// Performance indexes for admin filters and sorting
+TicketSchema.index({ event: 1, purchasedAt: -1 });
+TicketSchema.index({ status: 1, purchasedAt: -1 });
+TicketSchema.index({ event: 1, status: 1, purchasedAt: -1 });
 
 module.exports = model('Ticket', TicketSchema);

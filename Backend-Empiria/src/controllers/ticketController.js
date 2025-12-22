@@ -188,10 +188,64 @@ const getTicketByIdPublic = async (req, res) => {
     }
 };
 
+/**
+ * Admin: List tickets with optional filters
+ * GET /api/tickets?eventId=<id>&status=<status>&page=1&limit=50
+ * Requires JWT (role not enforced yet)
+ */
+const listTickets = async (req, res) => {
+    try {
+        console.log('[listTickets] Called with query:', req.query);
+        console.log('[listTickets] User from JWT:', req.uid);
+        
+        const { eventId, status, page = 1, limit = 100 } = req.query;
+
+        const query = {};
+        if (eventId) {
+            console.log('[listTickets] Filtering by eventId:', eventId);
+            query.event = eventId;
+        }
+        if (status) {
+            console.log('[listTickets] Filtering by status:', status);
+            query.status = status;
+        }
+
+        const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNum = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 1000);
+
+        console.log('[listTickets] Final query filters:', JSON.stringify(query));
+
+        const [tickets, total] = await Promise.all([
+            Ticket.find(query)
+                .select('user event status amount purchasedAt')
+                .sort({ purchasedAt: -1 })
+                .skip((pageNum - 1) * limitNum)
+                .limit(limitNum)
+                .lean()
+                .populate({ path: 'event', select: 'title date location' })
+                .populate({ path: 'user', select: 'nombre apellido correo' }),
+            Ticket.countDocuments(query)
+        ]);
+
+        console.log(`[listTickets] Found ${tickets.length} tickets, total: ${total}`);
+        
+        // Log first ticket's event ID for debugging
+        if (tickets.length > 0 && tickets[0].event) {
+            console.log(`[listTickets] First ticket event ID:`, tickets[0].event._id.toString());
+        }
+
+        res.json({ status: 1, tickets, pagination: { page: pageNum, limit: limitNum, total } });
+    } catch (error) {
+        console.error('Error listing tickets:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
 module.exports = {
     checkTicketStatus,
     checkTicketStatusByPaymentId,
     getTicketById,
     getTicketByPaymentId,
-    getTicketByIdPublic
+    getTicketByIdPublic,
+    listTickets
 };

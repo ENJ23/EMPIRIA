@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getEvents, getEventById, createEvent, deleteEvent } = require('../controllers/eventController');
+const { getEvents, getEventById, createEvent, updateEvent, deleteEvent } = require('../controllers/eventController');
 const { validarJWT } = require('../middlewares/validate-jwt');
 
 const router = Router();
@@ -10,6 +10,7 @@ router.get('/:id', getEventById);
 
 // Protected routes (Admin only ideally, for now just JWT)
 router.post('/', validarJWT, createEvent);
+router.put('/:id', validarJWT, updateEvent);
 router.delete('/:id', validarJWT, deleteEvent);
 
 module.exports = router;

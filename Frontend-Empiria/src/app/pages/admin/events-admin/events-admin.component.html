@@ -1,41 +1,187 @@
-<div class="admin-header">
-    <h2>Administrar Eventos</h2>
-    <button class="btn btn-primary">
-        <span class="material-icons">add</span> Nuevo Evento
-    </button>
-</div>
+<div class="admin-page">
+    <div class="header-section">
+        <div class="header-content">
+            <h2>Administrar Eventos</h2>
+            <p>Gestiona, edita y crea nuevos eventos para la plataforma</p>
+        </div>
+        <button class="btn btn-primary glow-effect" (click)="openCreate()" *ngIf="!isFormOpen">
+            <span class="material-icons">add_circle</span> Nuevo Evento
+        </button>
+    </div>
 
-<div class="events-table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Evento</th>
-                <th>Fecha</th>
-                <th>Lugar</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let event of events$ | async">
-                <td>
-                    <div class="event-cell">
-                        <span class="event-title">{{ event.title }}</span>
-                        <span class="event-preview text-muted">{{ event.description | slice:0:30 }}...</span>
+    <!-- Event Form (Modal/Card Style) -->
+    <div class="form-overlay" *ngIf="isFormOpen">
+        <div class="form-card">
+            <div class="form-header">
+                <h3>{{ editingId ? 'Editar Evento' : 'Crear Nuevo Evento' }}</h3>
+                <button class="btn-icon close-btn" (click)="cancel()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <div class="form-scroll-content">
+                <div class="form-section">
+                    <h4>Información Principal</h4>
+                    <div class="form-grid">
+                        <div class="form-group span-2">
+                            <label>Título del Evento</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">event</span>
+                                <input type="text" [(ngModel)]="form.title" name="title"
+                                    placeholder="Ej: Tech Conference 2025" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha y Hora</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">schedule</span>
+                                <input type="datetime-local" [(ngModel)]="form.date" name="date" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ubicación</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">place</span>
+                                <input type="text" [(ngModel)]="form.location" name="location"
+                                    placeholder="Ej: Centro de Convenciones" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group span-2">
+                            <label>URL de Imagen</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">image</span>
+                                <input type="text" [(ngModel)]="form.imageUrl" name="imageUrl" placeholder="https://..."
+                                    required />
+                            </div>
+                        </div>
+
+                        <div class="form-group span-2">
+                            <label>Descripción</label>
+                            <div class="input-wrapper textarea-wrapper">
+                                <textarea rows="4" [(ngModel)]="form.description" name="description"
+                                    placeholder="Detalles del evento..."></textarea>
+                            </div>
+                        </div>
                     </div>
-                </td>
-                <td>{{ event.date | date:'dd/MM/yyyy' }}</td>
-                <td>{{ event.location }}</td>
-                <td><span class="status-badge" [class.active]="!event.isPreventa">Activo</span></td>
-                <td class="actions-cell">
-                    <button class="btn-icon">
-                        <span class="material-icons">edit</span>
-                    </button>
-                    <button class="btn-icon delete">
-                        <span class="material-icons">delete</span>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </div>
+
+                <div class="form-section">
+                    <h4>Configuración de Entradas</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Precio Mínimo ($)</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">attach_money</span>
+                                <input type="number" [(ngModel)]="form.priceRange.min" name="min" placeholder="0" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Precio Máximo ($)</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">attach_money</span>
+                                <input type="number" [(ngModel)]="form.priceRange.max" name="max" placeholder="0" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Capacidad Total</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">groups</span>
+                                <input type="number" [(ngModel)]="form.capacity" name="capacity"
+                                    placeholder="Ej: 500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section highlight-section">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="preventaCheck" [(ngModel)]="form.isPreventa" name="isPreventa" />
+                        <label for="preventaCheck">Habilitar Fase de Preventa</label>
+                    </div>
+
+                    <div class="form-grid" *ngIf="form.isPreventa">
+                        <div class="form-group">
+                            <label>Precio Preventa ($)</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">local_offer</span>
+                                <input type="number" [(ngModel)]="form.preventaPrice" name="preventaPrice" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Límite de Preventa</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">confirmation_number</span>
+                                <input type="number" [(ngModel)]="form.preventaLimit" name="preventaLimit" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-text" (click)="cancel()">Cancelar</button>
+                <button class="btn btn-primary" [disabled]="isSaving" (click)="save()">
+                    <span class="material-icons" *ngIf="!isSaving">save</span>
+                    <span class="spinner-small" *ngIf="isSaving"></span>
+                    {{ isSaving ? 'Guardando...' : 'Guardar Evento' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Evento</th>
+                    <th>Fecha</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                    <th class="text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let event of events$ | async">
+                    <td>
+                        <div class="event-info-cell">
+                            <div class="event-thumb" [style.background-image]="'url(' + event.imageUrl + ')'"></div>
+                            <div class="event-text">
+                                <span class="title">{{ event.title }}</span>
+                                <span class="desc">{{ event.description | slice:0:40 }}...</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-badge">
+                            <span class="day">{{ event.date | date:'dd' }}</span>
+                            <span class="month">{{ event.date | date:'MMM' | uppercase }}</span>
+                        </div>
+                    </td>
+                    <td class="location-cell">
+                        <span class="material-icons small-icon">place</span> {{ event.location }}
+                    </td>
+                    <td>
+                        <span class="status-pill" [class.preventa]="event.isPreventa"
+                            [class.active]="!event.isPreventa">
+                            {{ event.isPreventa ? 'PREVENTA' : 'GENERAL' }}
+                        </span>
+                    </td>
+                    <td class="actions-cell text-right">
+                        <button class="btn-icon edit" (click)="openEdit(event)" title="Editar">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon delete" (click)="delete(event)" title="Eliminar">
+                            <span class="material-icons">delete_outline</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

@@ -1,67 +1,133 @@
-<div class="admin-header">
-    <h2>Reporte de Ventas</h2>
-    <div class="filter-controls">
-        <select class="event-selector">
-            <option value="">Todos los eventos</option>
-            <option *ngFor="let event of events$ | async" [value]="event.id">{{ event.title }}</option>
-        </select>
-    </div>
-</div>
+<div class="admin-page">
+    <div class="header-section">
+        <div class="header-content">
+            <h2>Panel de Ventas</h2>
+            <p>Monitoreo de ingresos y gestión de tickets</p>
+        </div>
 
-<div class="sales-stats section-grid">
-    <div class="stat-card">
-        <h3>Total Vendido</h3>
-        <p class="stat-value">$1.250.000</p>
-    </div>
-    <div class="stat-card">
-        <h3>Entradas</h3>
-        <p class="stat-value">450</p>
-    </div>
-    <div class="stat-card">
-        <h3>Ocupación</h3>
-        <p class="stat-value">85%</p>
-    </div>
-</div>
+        <div class="actions-wrapper">
+            <div class="filter-dropdown">
+                <span class="material-icons dropdown-icon">filter_list</span>
+                <select #eventSelect class="event-selector" [(ngModel)]="selectedEventId" (change)="onEventFilterChange(eventSelect.value)">
+                    <option value="">Todos los eventos</option>
+                    <option *ngFor="let event of events$ | async" [value]="event.id">{{ event.title }}</option>
+                </select>
+                <button class="btn" style="margin-left: .5rem;" (click)="fetchAllTickets()" title="Actualizar lista">
+                    <span class="material-icons">refresh</span>
+                </button>
+            </div>
 
-<div class="table-container">
-    <h3>Lista de Compradores</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>DNI</th>
-                <th>Evento</th>
-                <th>Tipo Entrada</th>
-                <th>Fecha Compra</th>
-                <th>Monto</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Mock Data Rows -->
-            <tr>
-                <td>Juan Pérez</td>
-                <td>12.345.678</td>
-                <td>Neon Party</td>
-                <td><span class="badge vip">VIP</span></td>
-                <td>12/12/2025</td>
-                <td>$15,000</td>
-            </tr>
-            <tr>
-                <td>Maria Garcia</td>
-                <td>87.654.321</td>
-                <td>Tech Summit</td>
-                <td><span class="badge general">General</span></td>
-                <td>11/12/2025</td>
-                <td>$5,000</td>
-            </tr>
-            <tr>
-                <td>Carlos Lopez</td>
-                <td>11.222.333</td>
-                <td>Neon Party</td>
-                <td><span class="badge general">General</span></td>
-                <td>10/12/2025</td>
-                <td>$8,000</td>
-            </tr>
-        </tbody>
-    </table>
+            <div class="export-actions">
+                <button class="btn btn-outline" (click)="exportExcel()" title="Exportar Excel">
+                    <span class="material-icons">table_view</span> <span class="btn-label">Excel</span>
+                </button>
+                <button class="btn btn-outline" (click)="exportPdf()" title="Exportar PDF">
+                    <span class="material-icons">picture_as_pdf</span> <span class="btn-label">PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="sales-stats section-grid">
+        <div class="stat-card total-sales">
+            <div class="stat-icon pulse-soft">
+                <span class="material-icons">payments</span>
+            </div>
+            <div class="stat-info">
+                <h3>Total Vendido</h3>
+                <p class="stat-value">${{ totalAmount | number:'1.0-0' }}</p>
+                <span class="stat-trend positive">
+                    <span class="material-icons">trending_up</span> +12% vs mes anterior
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card total-tickets">
+            <div class="stat-icon">
+                <span class="material-icons">confirmation_number</span>
+            </div>
+            <div class="stat-info">
+                <h3>Entradas Vendidas</h3>
+                <p class="stat-value">{{ totalTickets }}</p>
+                <span class="stat-context">Tickets generados</span>
+            </div>
+        </div>
+
+        <div class="stat-card occupancy">
+            <div class="stat-icon">
+                <span class="material-icons">stadium</span>
+            </div>
+            <div class="stat-info">
+                <h3>Ocupación Global</h3>
+                <p class="stat-value">85%</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 85%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="table-card">
+        <div class="card-header">
+            <h3>Transacciones Recientes</h3>
+            <span class="badge-count">{{ tickets.length }} registros</span>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Evento</th>
+                        <th>Fecha Compra</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngIf="loading" class="fade-in-row">
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            <span class="material-icons" style="animation: spin 1s linear infinite;">refresh</span>
+                            Cargando tickets...
+                        </td>
+                    </tr>
+                    <tr *ngIf="!loading && tickets.length === 0" class="fade-in-row">
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            No hay tickets disponibles
+                        </td>
+                    </tr>
+                    <tr *ngFor="let t of tickets; trackBy: trackById" class="fade-in-row">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">{{ t.user.name.charAt(0) || '?' }}</div>
+                                <div class="user-text">
+                                    <span class="name">{{ t.user.name }}</span>
+                                    <span class="email">{{ t.user.email }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="event-pill">{{ t.event.title }}</span>
+                        </td>
+                        <td class="date-cell">
+                            {{ t.purchasedAt | date:'dd MMM yyyy' }}
+                            <span class="time">{{ t.purchasedAt | date:'HH:mm' }}</span>
+                        </td>
+                        <td class="amount-cell">${{ t.amount | number:'1.0-0' }}</td>
+                        <td>
+                            <span class="status-badge" [class.approved]="t.status==='approved'"
+                                [class.pending]="t.status==='pending'" [class.rejected]="t.status==='rejected'">
+                                <span class="material-icons status-icon"
+                                    *ngIf="t.status==='approved'">check_circle</span>
+                                <span class="material-icons status-icon" *ngIf="t.status==='pending'">schedule</span>
+                                <span class="material-icons status-icon" *ngIf="t.status==='rejected'">cancel</span>
+                                {{ t.status | uppercase }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

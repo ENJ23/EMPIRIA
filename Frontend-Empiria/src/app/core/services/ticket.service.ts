@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { TicketSummary } from '../models/ticket.model';
 
 @Injectable({
     providedIn: 'root'
@@ -47,5 +48,50 @@ export class TicketService {
         const url = `${this.apiUrl}/by-payment/${paymentId}`;
         console.log(`[TicketService] Calling: ${url}`);
         return this.http.get(url);
+    }
+
+    // Admin: list tickets with optional filters
+    listTickets(params: { eventId?: string; status?: string; page?: number; limit?: number }): Observable<{ tickets: TicketSummary[]; total: number; page: number; limit: number }>{
+        const token = this.authService.getToken();
+        const httpParams: any = {};
+        if (params.eventId) httpParams.eventId = params.eventId;
+        if (params.status) httpParams.status = params.status;
+        if (params.page) httpParams.page = params.page;
+        if (params.limit) httpParams.limit = params.limit;
+
+        console.log('[TicketService.listTickets] Calling with params:', httpParams);
+        console.log('[TicketService.listTickets] Token:', token ? 'exists' : 'MISSING');
+        console.log('[TicketService.listTickets] URL:', this.apiUrl);
+
+        return this.http.get<any>(`${this.apiUrl}`, {
+            headers: { 'x-token': token || '' },
+            params: httpParams
+        }).pipe(
+            map(res => {
+                console.log('[TicketService.listTickets] Raw response:', res);
+                return {
+                    tickets: (res.tickets || []).map((t: any) => ({
+                        id: t._id,
+                        user: { 
+                            id: t.user?._id, 
+                            name: t.user?.nombre ? `${t.user.nombre} ${t.user.apellido || ''}`.trim() : 'N/A',
+                            email: t.user?.correo || 'N/A'
+                        },
+                        event: { 
+                            id: t.event?._id, 
+                            title: t.event?.title || 'N/A',
+                            date: t.event?.date ? new Date(t.event.date) : new Date(),
+                            location: t.event?.location || 'N/A'
+                        },
+                        status: t.status,
+                        amount: t.amount,
+                        purchasedAt: new Date(t.purchasedAt)
+                    } as TicketSummary)),
+                    total: res.pagination?.total || res.tickets?.length || 0,
+                    page: res.pagination?.page || 1,
+                    limit: res.pagination?.limit || (res.tickets ? res.tickets.length : 0)
+                };
+            })
+        );
     }
 }
