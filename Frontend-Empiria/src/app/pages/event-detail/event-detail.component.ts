@@ -19,6 +19,7 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     event$!: Observable<Event | undefined>;
     selectedTicket: string | null = null;
     currentPrice: number = 0;
+    selectedQuantity: number = 1;
     eventId: string | null = null;
 
     // Ticket availability
@@ -84,11 +85,28 @@ export class EventDetailComponent implements OnInit, OnDestroy {
         this.purchaseErrorDetails = {};
     }
 
+    setQuantity(q: number) {
+        const maxQ = Math.max(1, this.availableTickets || 1);
+        this.selectedQuantity = Math.max(1, Math.min(Math.floor(q) || 1, maxQ));
+    }
+
+    incrementQuantity() {
+        if (!this.isSoldOut && this.selectedQuantity < this.availableTickets) {
+            this.setQuantity(this.selectedQuantity + 1);
+        }
+    }
+
+    decrementQuantity() {
+        if (this.selectedQuantity > 1) {
+            this.setQuantity(this.selectedQuantity - 1);
+        }
+    }
+
     purchase() {
         if (!this.selectedTicket || !this.eventId) return;
 
         this.isProcessing = true;
-        const quantity = 1;
+        const quantity = Math.max(1, Math.min(this.selectedQuantity || 1, this.availableTickets || 1));
         const ticketType = this.selectedTicket; // Send the selected ticket type
 
         this.paymentService.createPreference(this.eventId, quantity, ticketType).subscribe({
@@ -97,7 +115,7 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                 this.purchaseErrorMsg = null;
                 this.purchaseErrorDetails = {};
                 this.paymentUrl = res.init_point;
-            this.paymentDbId = res.payment_id || null;
+                this.paymentDbId = res.payment_id || null;
                 // Generate QR, then force update inside Zone
                 QRCode.toDataURL(this.paymentUrl)
                     .then(url => {

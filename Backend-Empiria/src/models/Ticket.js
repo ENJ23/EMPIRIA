@@ -17,7 +17,6 @@ const TicketSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'Payment',
         required: true,
-        unique: true,
         index: true
     },
     // Legacy field for backwards compatibility (will be removed)

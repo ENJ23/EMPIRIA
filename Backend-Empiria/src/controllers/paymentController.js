@@ -77,10 +77,15 @@ const createPreference = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
         // Create external reference that will be returned in webhook
-        const externalData = { u: userId, e: eventId };
+        // Include timestamp and random to avoid collisions on unique external_reference
+        const externalData = { u: userId, e: eventId, t: Date.now(), r: Math.random().toString(36).slice(2, 8) };
         const externalReference = JSON.stringify(externalData);
 
         // Create preference in Mercado Pago
+        const webhookSecret = process.env.WEBHOOK_SECRET || '';
+        const webhookBase = process.env.WEBHOOK_URL || '';
+        const notificationUrl = webhookBase ? (webhookSecret ? `${webhookBase}?token=${encodeURIComponent(webhookSecret)}` : webhookBase) : '';
+
         const result = await preference.create({
             body: {
                 items: [
@@ -97,7 +102,7 @@ const createPreference = async (req, res) => {
                     failure: `${frontendUrl}/failure`,
                     pending: `${frontendUrl}/pending`
                 },
-                notification_url: process.env.WEBHOOK_URL || '',
+                notification_url: notificationUrl,
                 auto_return: 'approved',
                 external_reference: externalReference
             }
@@ -144,6 +149,14 @@ const receiveWebhook = async (req, res) => {
         console.log('[webhook] Received webhook request');
         console.log('[webhook] Query params:', req.query);
         console.log('[webhook] Body:', req.body);
+        // Validate webhook secret token if configured
+        const expectedToken = process.env.WEBHOOK_SECRET || '';
+        if (expectedToken) {
+            if (req.query.token !== expectedToken) {
+                console.warn('[webhook] Invalid or missing webhook token; ignoring');
+                return res.sendStatus(200);
+            }
+        }
 
         // Mercado Pago sends topic in query string and optionally id
         const topic = req.query.topic || req.body.type;
@@ -230,44 +243,44 @@ const receiveWebhook = async (req, res) => {
         await paymentRecord.save();
         console.log(`[webhook] Payment record updated: ${paymentRecord._id}, Status: ${mpPaymentData.status}`);
 
-        // If payment is approved, create a Ticket and increment ticketsSold
+        // If payment is approved, create Ticket(s) and increment ticketsSold accordingly
         if (mpPaymentData.status === 'approved') {
-            // Check if ticket already exists for this payment
-            const ticketExists = await Ticket.findOne({ payment: paymentRecord._id });
-            
-            if (ticketExists) {
-                console.log(`[webhook] Ticket already exists for this payment: ${ticketExists._id}`);
-                return res.sendStatus(200);
-            }
-
-            // Create new Ticket
-            const ticket = new Ticket({
-                user: userId,
-                event: eventId,
-                payment: paymentRecord._id,
-                paymentId: paymentId, // legacy field
-                status: 'approved',
-                amount: mpPaymentData.transaction_amount || paymentRecord.amount,
-                purchasedAt: new Date()
-            });
-
             try {
-                await ticket.save();
-                console.log(`[webhook] ✅ Ticket created: ${ticket._id} for User: ${userId}, Event: ${eventId}`);
-                
-                // Increment ticketsSold for the event
-                await Event.findByIdAndUpdate(
-                    eventId,
-                    { $inc: { ticketsSold: 1 } },
-                    { new: true }
-                );
-                console.log(`[webhook] ✅ Event ticketsSold incremented for event: ${eventId}`);
-            } catch (e) {
-                if (e && e.code === 11000) {
-                    console.warn('[webhook] Duplicate ticket creation attempted, ignoring.');
+                // Determine how many tickets already exist for this payment
+                const existingCount = await Ticket.countDocuments({ payment: paymentRecord._id });
+                const qty = Number(paymentRecord.quantity || 1);
+                const remainingToCreate = Math.max(0, qty - existingCount);
+
+                if (remainingToCreate === 0) {
+                    console.log(`[webhook] Tickets already created for payment ${paymentRecord._id}. Existing: ${existingCount}/${qty}`);
                 } else {
-                    throw e;
+                    console.log(`[webhook] Creating ${remainingToCreate} ticket(s) for Payment: ${paymentRecord._id}`);
+                    const perTicketAmount = (mpPaymentData.transaction_amount || paymentRecord.amount) / qty;
+                    const bulkTickets = [];
+                    for (let i = 0; i < remainingToCreate; i++) {
+                        bulkTickets.push({
+                            user: userId,
+                            event: eventId,
+                            payment: paymentRecord._id,
+                            paymentId: paymentId, // legacy field
+                            status: 'approved',
+                            amount: perTicketAmount,
+                            purchasedAt: new Date()
+                        });
+                    }
+                    await Ticket.insertMany(bulkTickets, { ordered: false });
+                    console.log(`[webhook] ✅ Created ${remainingToCreate} ticket(s) for User: ${userId}, Event: ${eventId}`);
+
+                    // Increment ticketsSold for the event by number of tickets created
+                    await Event.findByIdAndUpdate(
+                        eventId,
+                        { $inc: { ticketsSold: remainingToCreate } },
+                        { new: true }
+                    );
+                    console.log(`[webhook] ✅ Event ticketsSold +${remainingToCreate} for event: ${eventId}`);
                 }
+            } catch (e) {
+                console.error('[webhook] Error creating tickets:', e?.message || e);
             }
         } else {
             console.log(`[webhook] Payment status is '${mpPaymentData.status}', not creating ticket`);

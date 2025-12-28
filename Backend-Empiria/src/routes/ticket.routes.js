@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validate-fields');
 const { validarJWT } = require('../middlewares/validate-jwt');
+const { requireAdmin } = require('../middlewares/require-admin');
 const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketByIdPublic, listTickets } = require('../controllers/ticketController');
 
 const router = Router();
@@ -25,7 +26,7 @@ router.get('/status/:eventId', (req, res, next) => {
 // AUTHENTICATED ROUTES (require JWT) - Apply middleware then define specific routes
 router.use(validarJWT);
 // Admin list of tickets with optional filters
-router.get('/', listTickets);
+router.get('/', requireAdmin, listTickets);
 router.get('/status/:eventId', checkTicketStatus);
 router.get('/:id', getTicketById);
 

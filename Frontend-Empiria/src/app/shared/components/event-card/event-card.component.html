@@ -2,6 +2,7 @@
     <div class="card-image">
         <img [src]="event.imageUrl" [alt]="event.title">
         <div class="card-overlay">
+            <span class="presale-badge" *ngIf="event.isPreventa">PREVENTA</span>
             <span class="category-tag">{{ event.categories[0] }}</span>
         </div>
     </div>
@@ -17,9 +18,17 @@
                 {{ event.location }}
             </p>
             <div class="card-footer">
-                <span class="price" *ngIf="event.priceRange.min > 0">
-                    Desde ${{ event.priceRange.min }}
-                </span>
+                <div class="price-wrapper" *ngIf="event.priceRange.min > 0">
+                    <ng-container *ngIf="event.isPreventa; else regularPrice">
+                        <span class="offer-label">OFERTA</span>
+                        <span class="price highlight">
+                            Desde ${{ (event.preventaPrice) ? event.preventaPrice : event.priceRange.min }}
+                        </span>
+                    </ng-container>
+                    <ng-template #regularPrice>
+                        <span class="price">Desde ${{ event.priceRange.min }}</span>
+                    </ng-template>
+                </div>
                 <span class="price-free" *ngIf="event.priceRange.min === 0">
                     Entrada Libre
                 </span>
