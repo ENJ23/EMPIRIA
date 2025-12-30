@@ -21,6 +21,16 @@
             <ng-container *ngIf="authService.currentUser() as user; else loginButton">
                 <div class="user-info">
                     <span class="user-name">Hola, {{ user.nombre }}</span>
+                    <div class="user-links" *ngIf="user">
+                        <a routerLink="/mis-entradas" routerLinkActive="active" class="user-link" title="Mis Entradas">
+                            <span class="material-icons">confirmation_number</span>
+                            <span class="user-link-text">Mis entradas</span>
+                        </a>
+                        <a routerLink="/mis-pagos" routerLinkActive="active" class="user-link" title="Mis Pagos">
+                            <span class="material-icons">receipt_long</span>
+                            <span class="user-link-text">Mis pagos</span>
+                        </a>
+                    </div>
                     <button (click)="logout()" class="btn-logout" title="Cerrar Sesión">
                         <span class="material-icons">logout</span>
                     </button>

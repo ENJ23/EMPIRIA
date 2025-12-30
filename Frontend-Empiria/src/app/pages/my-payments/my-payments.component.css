@@ -1,0 +1,262 @@
+.my-payments-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.my-payments-container h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.loading,
+.error-message,
+.empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.loading p,
+.empty-state p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.empty-state .subtitle {
+    color: #999;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+.error-message {
+    background: #fee;
+    border-left: 4px solid #f44;
+}
+
+.error-message p {
+    color: #c33;
+    margin-bottom: 1rem;
+}
+
+.btn-retry {
+    background: #f44;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-retry:hover {
+    background: #d33;
+}
+
+.payments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.payment-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.payment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.payment-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+}
+
+.payment-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    flex: 1;
+}
+
+.payment-status {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.status-approved {
+    background: #4caf50;
+    color: white;
+}
+
+.status-pending {
+    background: #ff9800;
+    color: white;
+}
+
+.status-rejected {
+    background: #f44;
+    color: white;
+}
+
+.payment-details {
+    padding: 1.5rem;
+    background: #f9f9f9;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row strong {
+    color: #333;
+    font-weight: 600;
+    min-width: 130px;
+}
+
+.detail-row span {
+    color: #666;
+    text-align: right;
+    flex: 1;
+}
+
+.reservation-section {
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+    background: #f0f8ff;
+}
+
+.reservation-active {
+    border: 2px solid #ff9800;
+    border-radius: 4px;
+    padding: 1rem;
+    background: #fff8e1;
+}
+
+.reservation-expired {
+    border: 2px solid #999;
+    border-radius: 4px;
+    padding: 1rem;
+    background: #f5f5f5;
+    opacity: 0.7;
+}
+
+.reservation-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.reservation-header strong {
+    color: #333;
+}
+
+.reservation-time {
+    font-weight: bold;
+    color: #ff9800;
+}
+
+.reservation-note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.payment-actions {
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.btn-pay-now {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-pay-now:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.approved-message {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.rejected-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .my-payments-container {
+        padding: 1rem;
+    }
+
+    .my-payments-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .payments-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .payment-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .payment-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .detail-row strong,
+    .detail-row span {
+        text-align: left;
+    }
+}

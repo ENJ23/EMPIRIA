@@ -20,4 +20,12 @@ export class PaymentService {
             { headers: { 'x-token': token || '' } }
         );
     }
+
+    getMyPayments(): Observable<any> {
+        const token = this.authService.getToken();
+        
+        return this.http.get(`${this.apiUrl}/my-payments`,
+            { headers: { 'x-token': token || '' } }
+        );
+    }
 }

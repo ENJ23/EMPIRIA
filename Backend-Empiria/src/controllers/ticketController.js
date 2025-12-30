@@ -241,11 +241,45 @@ const listTickets = async (req, res) => {
     }
 };
 
+/**
+ * Get all tickets for the authenticated user
+ * GET /api/tickets/my-tickets
+ * Requires JWT (authenticated user)
+ */
+const getMyTickets = async (req, res) => {
+    try {
+        const userId = req.uid; // From JWT
+        console.log(`[getMyTickets] Fetching tickets for user: ${userId}`);
+
+        const tickets = await Ticket.find({ user: userId })
+            .populate('event', 'title date location capacity')
+            .populate('payment', 'status mp_payment_id')
+            .sort({ purchasedAt: -1 });
+
+        res.json({
+            status: 1,
+            tickets: tickets.map(t => ({
+                id: t._id,
+                event: t.event,
+                status: t.status,
+                amount: t.amount,
+                purchasedAt: t.purchasedAt,
+                entryQr: t.entryQr,
+                isUsed: t.isUsed || false
+            }))
+        });
+    } catch (error) {
+        console.error('[getMyTickets] Error:', error);
+        res.status(500).json({ status: 0, msg: 'Error al obtener tus tickets' });
+    }
+};
+
 module.exports = {
     checkTicketStatus,
     checkTicketStatusByPaymentId,
     getTicketById,
     getTicketByPaymentId,
     getTicketByIdPublic,
-    listTickets
+    listTickets,
+    getMyTickets
 };

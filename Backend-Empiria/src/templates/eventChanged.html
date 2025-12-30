@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambio de Fecha - Evento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-header {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 5px solid #FF5733;
+        }
+
+        .alert-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .alert-header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .email-body {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .event-card {
+            background-color: #f9f9f9;
+            border-left: 5px solid #FF6B35;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .event-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #FF6B35;
+            margin-bottom: 20px;
+        }
+
+        .reason-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .reason-box p {
+            color: #856404;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .dates-comparison {
+            background-color: white;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            border: 2px solid #f0f0f0;
+        }
+
+        .date-item {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .old-date {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+
+        .new-date {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+
+        .date-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .old-date .date-label {
+            color: #c62828;
+        }
+
+        .new-date .date-label {
+            color: #2e7d32;
+        }
+
+        .date-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .old-date .date-value {
+            color: #d32f2f;
+        }
+
+        .new-date .date-value {
+            color: #388e3c;
+        }
+
+        .arrow {
+            text-align: center;
+            padding: 15px 0;
+            font-size: 28px;
+            color: #FF6B35;
+        }
+
+        .confirmation-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .confirmation-box p {
+            color: #2e7d32;
+            font-size: 15px;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .event-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .event-details p {
+            margin: 8px 0;
+        }
+
+        .event-details strong {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .cta-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            padding: 14px 40px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .support-text {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 25px 0;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 30px 0;
+        }
+
+        .email-footer {
+            background-color: #f5f5f5;
+            padding: 25px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-text {
+            margin: 8px 0;
+        }
+
+        .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .email-body {
+                padding: 20px;
+            }
+
+            .event-card {
+                padding: 15px;
+            }
+
+            .event-title {
+                font-size: 20px;
+            }
+
+            .alert-header h1 {
+                font-size: 24px;
+            }
+
+            .date-value {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Alert Header -->
+        <div class="alert-header">
+            <div class="icon">⚠️</div>
+            <h1>Cambio de Fecha</h1>
+            <p>Importante: Tu evento ha sido reprogramado</p>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <p class="greeting">
+                ¡Hola <strong>{{nombre}}</strong>!
+            </p>
+
+            <p style="font-size: 15px; color: #555; margin-bottom: 20px;">
+                Te contactamos para informarte que ha habido un cambio en la fecha del evento al que ya has comprado tu entrada.
+            </p>
+
+            <!-- Event Information -->
+            <div class="event-card">
+                <div class="event-title">{{titulo}}</div>
+                
+                <div class="event-details">
+                    <p>
+                        <strong>📍 Ubicación:</strong>
+                        {{ubicacion}}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Reason for Change -->
+            <div class="reason-box">
+                <p><strong>Motivo del cambio:</strong> {{razon}}</p>
+            </div>
+
+            <!-- Dates Comparison -->
+            <div class="dates-comparison">
+                <div class="date-item old-date">
+                    <div class="date-label">❌ Fecha Original</div>
+                    <div class="date-value">{{fechaAnterior}}</div>
+                </div>
+
+                <div class="arrow">⬇️ ⬇️ ⬇️</div>
+
+                <div class="date-item new-date">
+                    <div class="date-label">✅ Nueva Fecha</div>
+                    <div class="date-value">{{fechaNueva}}</div>
+                    <p style="margin-top: 10px; font-size: 14px;">Hora: <strong>{{hora}}</strong></p>
+                </div>
+            </div>
+
+            <!-- Confirmation -->
+            <div class="confirmation-box">
+                <p>✅ Buena noticia: Tu entrada sigue siendo válida con la nueva fecha. No necesitas hacer nada más.</p>
+            </div>
+
+            <!-- Important Info -->
+            <div class="support-text">
+                Entendemos que los cambios pueden causar inconvenientes. Estamos trabajando para ofrecerte la mejor experiencia posible.
+                <br><br>
+                Si tienes alguna pregunta o necesitas asistencia, no dudes en contactarnos.
+            </div>
+
+            <!-- CTA Button -->
+            <div class="cta-container">
+                <a href="{{enlaceEvento}}" class="cta-button">Ver evento actualizado</a>
+            </div>
+
+            <div class="divider"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-text">
+                © 2025 Empiria Jujuy - Todos los derechos reservados
+            </div>
+            <div class="footer-text">
+                Este es un correo automático generado por nuestro sistema
+            </div>
+            <div class="footer-text">
+                Por favor no responder a este correo
+            </div>
+        </div>
+    </div>
+</body>
+</html>

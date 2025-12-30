@@ -42,6 +42,11 @@ const paymentSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    // Mercado Pago Preference Init Point (for redirecting to payment)
+    mp_init_point: {
+        type: String,
+        default: null
+    },
     // Payment Status
     status: {
         type: String,

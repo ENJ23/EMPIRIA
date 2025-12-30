@@ -3,7 +3,7 @@ const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validate-fields');
 const { validarJWT } = require('../middlewares/validate-jwt');
 const { requireAdmin } = require('../middlewares/require-admin');
-const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketByIdPublic, listTickets } = require('../controllers/ticketController');
+const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketByIdPublic, listTickets, getMyTickets } = require('../controllers/ticketController');
 
 const router = Router();
 
@@ -25,6 +25,8 @@ router.get('/status/:eventId', (req, res, next) => {
 
 // AUTHENTICATED ROUTES (require JWT) - Apply middleware then define specific routes
 router.use(validarJWT);
+// User's own tickets (authenticated users can view their own)
+router.get('/my-tickets', getMyTickets);
 // Admin list of tickets with optional filters
 router.get('/', requireAdmin, listTickets);
 router.get('/status/:eventId', checkTicketStatus);

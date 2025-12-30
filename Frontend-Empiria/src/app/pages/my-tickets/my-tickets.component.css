@@ -1,0 +1,247 @@
+.my-tickets-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.my-tickets-container h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.loading,
+.error-message,
+.empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.loading p,
+.empty-state p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.empty-state .subtitle {
+    color: #999;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+.error-message {
+    background: #fee;
+    border-left: 4px solid #f44;
+}
+
+.error-message p {
+    color: #c33;
+    margin-bottom: 1rem;
+}
+
+.btn-retry {
+    background: #f44;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-retry:hover {
+    background: #d33;
+}
+
+.tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.ticket-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ticket-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.ticket-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+}
+
+.ticket-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    flex: 1;
+}
+
+.ticket-status {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.status-active {
+    background: #4caf50;
+    color: white;
+}
+
+.status-used {
+    background: #999;
+    color: white;
+}
+
+.status-expired {
+    background: #ff9800;
+    color: white;
+}
+
+.status-pending {
+    background: #2196f3;
+    color: white;
+}
+
+.ticket-details {
+    padding: 1.5rem;
+    background: #f9f9f9;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row strong {
+    color: #333;
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.detail-row span {
+    color: #666;
+    text-align: right;
+    flex: 1;
+}
+
+.ticket-qr-section {
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.qr-image {
+    background: white;
+    padding: 0.5rem;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+}
+
+.qr-image img {
+    display: block;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 0.8rem;
+    width: 100%;
+}
+
+.btn-view-qr,
+.btn-download-qr {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-view-qr {
+    background: #2196f3;
+    color: white;
+}
+
+.btn-view-qr:hover {
+    background: #1976d2;
+}
+
+.btn-download-qr {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-download-qr:hover {
+    background: #45a049;
+}
+
+.used-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.ticket-card {
+    position: relative;
+}
+
+@media (max-width: 768px) {
+    .my-tickets-container {
+        padding: 1rem;
+    }
+
+    .my-tickets-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .tickets-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .ticket-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ticket-header h3 {
+        font-size: 1.1rem;
+    }
+}

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recordatorio de Evento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .email-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .email-body {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .event-card {
+            background-color: #f9f9f9;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+
+        .event-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .event-info {
+            margin: 15px 0;
+            display: flex;
+            align-items: flex-start;
+            font-size: 15px;
+        }
+
+        .info-icon {
+            width: 30px;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .info-content h3 {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content p {
+            font-size: 15px;
+            color: #333;
+        }
+
+        .description-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .cta-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .reminder-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .reminder-box p {
+            color: #2e7d32;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 30px 0;
+        }
+
+        .email-footer {
+            background-color: #f5f5f5;
+            padding: 25px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-text {
+            margin: 8px 0;
+        }
+
+        .social-links {
+            margin: 15px 0;
+        }
+
+        .social-links a {
+            display: inline-block;
+            margin: 0 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .email-body {
+                padding: 20px;
+            }
+
+            .event-card {
+                padding: 15px;
+            }
+
+            .event-title {
+                font-size: 18px;
+            }
+
+            .email-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <h1>🎉 ¡Tu evento comienza mañana!</h1>
+            <p>Te recordamos que tienes un evento esperándote</p>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <p class="greeting">
+                ¡Hola <strong>{{nombre}}</strong>!
+            </p>
+
+            <p style="font-size: 15px; color: #555; margin-bottom: 20px;">
+                Te escribimos para recordarte que el evento al que ya compraste tu entrada se realizará <strong>MAÑANA</strong>. 
+                No queremos que te lo pierdas, así que aquí están todos los detalles importantes:
+            </p>
+
+            <!-- Event Details -->
+            <div class="event-card">
+                <div class="event-title">{{titulo}}</div>
+
+                <div class="event-info">
+                    <div class="info-icon">📅</div>
+                    <div class="info-content">
+                        <h3>Fecha y Hora</h3>
+                        <p>{{fecha}} a las {{hora}}</p>
+                    </div>
+                </div>
+
+                <div class="event-info">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <h3>Ubicación</h3>
+                        <p>{{ubicacion}}</p>
+                    </div>
+                </div>
+
+                <div class="event-info">
+                    <div class="info-icon">📝</div>
+                    <div class="info-content">
+                        <h3>Descripción</h3>
+                        <div class="description-box">{{descripcion}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Reminder -->
+            <div class="reminder-box">
+                <p>✅ Asegúrate de traer tu entrada o código QR para poder acceder al evento. ¡Te esperamos!</p>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="cta-container">
+                <a href="{{enlaceEvento}}" class="cta-button">Ver Detalles Completos</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666; text-align: center; margin: 20px 0;">
+                Si tienes alguna pregunta o necesitas información adicional, no dudes en contactarnos.
+            </p>
+
+            <div class="divider"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-text">
+                © 2025 Empiria Jujuy - Todos los derechos reservados
+            </div>
+            <div class="footer-text">
+                Este es un correo automático generado por nuestro sistema
+            </div>
+            <div class="footer-text">
+                Por favor no responder a este correo
+            </div>
+        </div>
+    </div>
+</body>
+</html>

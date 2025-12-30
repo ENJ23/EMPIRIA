@@ -94,4 +94,11 @@ export class TicketService {
             })
         );
     }
+
+    getMyTickets(): Observable<any> {
+        const token = this.authService.getToken();
+        return this.http.get(`${this.apiUrl}/my-tickets`, {
+            headers: { 'x-token': token || '' }
+        });
+    }
 }

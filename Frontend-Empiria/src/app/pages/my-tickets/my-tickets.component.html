@@ -1,0 +1,73 @@
+<div class="my-tickets-container">
+    <h2>Mis Entradas</h2>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading">
+        <p>Cargando tus entradas...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-message">
+        <p>{{ error }}</p>
+        <button (click)="loadMyTickets()" class="btn-retry">Reintentar</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && tickets.length === 0" class="empty-state">
+        <p>No tienes entradas aún</p>
+        <p class="subtitle">Las entradas que compres aparecerán aquí</p>
+    </div>
+
+    <!-- Tickets List -->
+    <div *ngIf="!loading && tickets.length > 0" class="tickets-grid">
+        <div *ngFor="let ticket of tickets" class="ticket-card">
+            <!-- Header with Event Title -->
+            <div class="ticket-header">
+                <h3>{{ ticket.event?.title }}</h3>
+                <span [ngClass]="getStatusClass(ticket.status)" class="ticket-status">
+                    {{ getStatusLabel(ticket.status) }}
+                </span>
+            </div>
+
+            <!-- Event Details -->
+            <div class="ticket-details">
+                <div class="detail-row">
+                    <strong>Fecha:</strong>
+                    <span>{{ formatDate(ticket.event?.date) }}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Ubicación:</strong>
+                    <span>{{ ticket.event?.location }}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Precio:</strong>
+                    <span>${{ ticket.amount?.toFixed(2) }}</span>
+                </div>
+                <div class="detail-row">
+                    <strong>Comprada:</strong>
+                    <span>{{ formatDate(ticket.purchasedAt) }}</span>
+                </div>
+            </div>
+
+            <!-- QR Section -->
+            <div class="ticket-qr-section" *ngIf="ticket.entryQr">
+                <div class="qr-image">
+                    <img [src]="ticket.entryQr" alt="QR Code" />
+                </div>
+                <div class="qr-actions">
+                    <button (click)="viewQR(ticket)" class="btn-view-qr">
+                        Ver QR
+                    </button>
+                    <button (click)="downloadQR(ticket)" class="btn-download-qr">
+                        Descargar QR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Used Badge -->
+            <div *ngIf="ticket.isUsed" class="used-badge">
+                ✓ Utilizada
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,6 +3,7 @@ const Event = require('../models/Event');
 const Payment = require('../models/Payment');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
+const Reservation = require('../models/Reservation');
 
 // Configure Mercado Pago
 const client = new MercadoPago.MercadoPagoConfig({
@@ -35,8 +36,28 @@ const createPreference = async (req, res) => {
             return res.status(404).json({ status: 0, msg: 'Evento no encontrado' });
         }
 
-        // Verificar capacidad del evento
-        const availableTickets = event.capacity - (event.ticketsSold || 0);
+        // Verificar capacidad del evento, considerando reservas activas
+        const activeReservations = await Reservation.aggregate([
+            {
+                $match: {
+                    event: event._id,
+                    confirmed: false,
+                    reservedUntil: { $gt: new Date() }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalReserved: { $sum: '$quantity' }
+                }
+            }
+        ]);
+        const reservedCount = activeReservations.length > 0 ? activeReservations[0].totalReserved : 0;
+        const ticketsSold = event.ticketsSold || 0;
+        const availableTickets = event.capacity - ticketsSold - reservedCount;
+
+        console.log(`[createPreference] Availability calc - Capacity: ${event.capacity}, Sold: ${ticketsSold}, Reserved: ${reservedCount}, Available: ${availableTickets}`);
+
         if (availableTickets <= 0) {
             return res.status(400).json({ 
                 status: 0, 
@@ -60,6 +81,35 @@ const createPreference = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
+        }
+
+        // ✅ VALIDACIÓN FINAL ANTES DE CREAR NADA
+        // Re-check capacity justo antes de crear Preference + Reservation (race condition safeguard)
+        const finalCheck = await Reservation.aggregate([
+            {
+                $match: {
+                    event: event._id,
+                    confirmed: false,
+                    reservedUntil: { $gt: new Date() }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalReserved: { $sum: '$quantity' }
+                }
+            }
+        ]);
+        const finalReservedCount = finalCheck.length > 0 ? finalCheck[0].totalReserved : 0;
+        const finalAvailable = event.capacity - (event.ticketsSold || 0) - finalReservedCount;
+
+        if (quantity > finalAvailable) {
+            return res.status(400).json({ 
+                status: 0, 
+                msg: `Solo hay ${finalAvailable} entrada(s) disponible(s)`,
+                available: Math.max(0, finalAvailable),
+                requested: quantity
+            });
         }
 
         // Determine price based on ticket type
@@ -118,6 +168,7 @@ const createPreference = async (req, res) => {
             quantity: Number(quantity),
             ticketType: ticketType,
             mp_preference_id: result.id,
+            mp_init_point: result.init_point,
             external_reference: externalReference,
             status: 'pending',
             transaction_amount: totalAmount
@@ -125,6 +176,19 @@ const createPreference = async (req, res) => {
 
         const savedPayment = await payment.save();
         console.log(`[createPreference] Payment record saved: ${savedPayment._id}`);
+
+        // Create a reservation to hold stock for 10 minutes
+        const reservedUntil = new Date(Date.now() + 600000); // 10 minutes
+        const reservation = new Reservation({
+            user: userId,
+            event: eventId,
+            payment: savedPayment._id,
+            quantity: Number(quantity),
+            reservedUntil,
+            confirmed: false
+        });
+        await reservation.save();
+        console.log(`[createPreference] ✅ Reservation created: ${reservation._id}, expires at ${reservedUntil}`);
 
         res.json({
             status: 1,
@@ -243,17 +307,26 @@ const receiveWebhook = async (req, res) => {
         await paymentRecord.save();
         console.log(`[webhook] Payment record updated: ${paymentRecord._id}, Status: ${mpPaymentData.status}`);
 
-        // If payment is approved, create Ticket(s) and increment ticketsSold accordingly
+        // If payment is approved, create Ticket(s) based on the Reservation
+        // ✅ NO revalidamos capacidad aquí; ya fue validada en createPreference
         if (mpPaymentData.status === 'approved') {
             try {
-                // Determine how many tickets already exist for this payment
-                const existingCount = await Ticket.countDocuments({ payment: paymentRecord._id });
                 const qty = Number(paymentRecord.quantity || 1);
+                
+                // Determine how many tickets already exist for this payment (idempotency)
+                const existingCount = await Ticket.countDocuments({ payment: paymentRecord._id });
                 const remainingToCreate = Math.max(0, qty - existingCount);
 
                 if (remainingToCreate === 0) {
                     console.log(`[webhook] Tickets already created for payment ${paymentRecord._id}. Existing: ${existingCount}/${qty}`);
+                    // Just mark reservation as confirmed (already done or no-op)
+                    await Reservation.updateOne(
+                        { payment: paymentRecord._id },
+                        { confirmed: true }
+                    );
                 } else {
+                    // ✅ Crear tickets sin revalidar capacidad
+                    // (confiamos en que fue validado en createPreference)
                     console.log(`[webhook] Creating ${remainingToCreate} ticket(s) for Payment: ${paymentRecord._id}`);
                     const perTicketAmount = (mpPaymentData.transaction_amount || paymentRecord.amount) / qty;
                     const bulkTickets = [];
@@ -271,19 +344,29 @@ const receiveWebhook = async (req, res) => {
                     await Ticket.insertMany(bulkTickets, { ordered: false });
                     console.log(`[webhook] ✅ Created ${remainingToCreate} ticket(s) for User: ${userId}, Event: ${eventId}`);
 
-                    // Increment ticketsSold for the event by number of tickets created
+                    // Increment ticketsSold for the event
                     await Event.findByIdAndUpdate(
                         eventId,
                         { $inc: { ticketsSold: remainingToCreate } },
                         { new: true }
                     );
                     console.log(`[webhook] ✅ Event ticketsSold +${remainingToCreate} for event: ${eventId}`);
+
+                    // Mark reservation as confirmed
+                    await Reservation.updateOne(
+                        { payment: paymentRecord._id },
+                        { confirmed: true }
+                    );
+                    console.log(`[webhook] ✅ Reservation confirmed for payment: ${paymentRecord._id}`);
                 }
             } catch (e) {
                 console.error('[webhook] Error creating tickets:', e?.message || e);
             }
         } else {
             console.log(`[webhook] Payment status is '${mpPaymentData.status}', not creating ticket`);
+            // Clean up reservation if payment failed/rejected/cancelled
+            await Reservation.deleteOne({ payment: paymentRecord._id });
+            console.log(`[webhook] Reservation deleted for payment: ${paymentRecord._id}`);
         }
 
         // Always return 200 to acknowledge webhook receipt
@@ -295,7 +378,81 @@ const receiveWebhook = async (req, res) => {
     }
 };
 
+/**
+ * Get user's own payments with event and reservation details
+ * Allows users to track payment status and rescind QR codes before expiry
+ */
+const getMyPayments = async (req, res) => {
+    try {
+        const userId = req.uid;
+
+        // Verify user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
+        }
+
+        // Fetch all payments for this user, populating event
+        const payments = await Payment.find({ user: userId })
+            .populate('event', 'title date location capacity')
+            .sort({ createdAt: -1 });
+
+        // Fetch reservations linked to these payments (since Payment has no direct reservation field)
+        const paymentIds = payments.map(p => p._id);
+        const reservations = await Reservation.find({ payment: { $in: paymentIds } })
+            .select('payment quantity reservedUntil confirmed')
+            .lean();
+        const reservationByPayment = new Map(reservations.map(r => [String(r.payment), r]));
+
+        // Enrich with reservation data and computed fields
+        const enrichedPayments = payments.map(payment => {
+            const reservation = reservationByPayment.get(String(payment._id));
+            const isActive = reservation && !reservation.confirmed && reservation.reservedUntil > new Date();
+            const timeRemainingMs = isActive ? reservation.reservedUntil - new Date() : 0;
+            const timeRemainingMinutes = Math.ceil(timeRemainingMs / 60000);
+
+            return {
+                id: payment._id,
+                event: payment.event,
+                quantity: payment.quantity || 1,
+                ticketType: payment.ticketType || 'general',
+                mp_payment_id: payment.mp_payment_id,
+                status: payment.status, // 'pending', 'approved', 'rejected', 'cancelled'
+                createdAt: payment.createdAt,
+                updatedAt: payment.updatedAt,
+                
+                // Reservation info for QR re-access
+                isReserved: !!reservation,
+                reservationConfirmed: reservation?.confirmed || false,
+                reservedUntil: reservation?.reservedUntil || null,
+                isReservationActive: isActive,
+                timeRemainingMinutes: timeRemainingMinutes,
+                
+                // Mercado Pago link (only if still pending/in reservation window)
+                canAccessQR: isActive || payment.status === 'pending',
+                mp_init_point: payment.mp_init_point || null
+            };
+        });
+
+        res.json({
+            status: 1,
+            msg: 'Pagos obtenidos correctamente',
+            data: enrichedPayments,
+            count: enrichedPayments.length
+        });
+
+    } catch (error) {
+        console.error('[getMyPayments] Error:', error.message);
+        res.status(500).json({
+            status: 0,
+            msg: 'Error al obtener los pagos',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createPreference,
-    receiveWebhook
+    receiveWebhook,
+    getMyPayments
 };

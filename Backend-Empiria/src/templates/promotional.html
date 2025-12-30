@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oferta Promocional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .promo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .promo-header h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .promo-header p {
+            font-size: 18px;
+            opacity: 0.95;
+            margin: 0;
+        }
+
+        .email-body {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .promo-description {
+            font-size: 15px;
+            color: #555;
+            line-height: 1.7;
+            margin: 20px 0;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+        }
+
+        .discount-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E7E 100%);
+            color: white;
+            font-size: 48px;
+            font-weight: 700;
+            padding: 30px 40px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .discount-text {
+            color: #666;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .code-section {
+            background-color: #f5f5f5;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .code-label {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .promo-code {
+            background: white;
+            border: 2px dashed #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            padding: 20px;
+            letter-spacing: 4px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .code-copy-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .validity {
+            text-align: center;
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+
+        .validity-text {
+            color: #856404;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .validity-date {
+            color: #856404;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .cta-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 50px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box p {
+            color: #856404;
+            font-size: 14px;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 30px 0;
+        }
+
+        .email-footer {
+            background-color: #f5f5f5;
+            padding: 25px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-text {
+            margin: 8px 0;
+        }
+
+        @media (max-width: 600px) {
+            .email-body {
+                padding: 20px;
+            }
+
+            .promo-header {
+                padding: 30px 20px;
+            }
+
+            .promo-header h1 {
+                font-size: 24px;
+            }
+
+            .discount-badge {
+                font-size: 36px;
+                padding: 20px 30px;
+            }
+
+            .promo-code {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Promo Header -->
+        <div class="promo-header">
+            <h1>🎯 ¡Oferta Especial para ti!</h1>
+            <p>{{titulo}}</p>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <p class="greeting">
+                ¡Hola <strong>{{nombre}}</strong>!
+            </p>
+
+            <div class="promo-description">
+                {{descripcion}}
+            </div>
+
+            <!-- Discount Badge -->
+            <div class="discount-container">
+                <div class="discount-badge">{{descuento}}%</div>
+                <p class="discount-text">de descuento en eventos</p>
+            </div>
+
+            <!-- Promo Code -->
+            <div class="code-section">
+                <div class="code-label">🔑 Tu código de promoción</div>
+                <div class="promo-code">{{codigoPromocion}}</div>
+                <div class="code-copy-hint">Copia este código y úsalo al comprar</div>
+            </div>
+
+            <!-- Validity -->
+            <div class="validity">
+                <div class="validity-text">⏰ Oferta válida hasta:</div>
+                <div class="validity-date"><strong>{{fechaFin}}</strong></div>
+            </div>
+
+            <!-- Warning -->
+            <div class="warning-box">
+                <p>⚠️ ¡No pierdas esta oportunidad! Las promociones son limitadas y pueden agotarse rápidamente.</p>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="cta-container">
+                <a href="{{enlace}}" class="cta-button">Explorar Eventos</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666; text-align: center; margin: 20px 0;">
+                Haz clic en el botón anterior o usa tu código al realizar la compra.
+            </p>
+
+            <div class="divider"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-text">
+                © 2025 Empiria Jujuy - Todos los derechos reservados
+            </div>
+            <div class="footer-text">
+                Este es un correo automático generado por nuestro sistema
+            </div>
+            <div class="footer-text">
+                Por favor no responder a este correo
+            </div>
+        </div>
+    </div>
+</body>
+</html>
