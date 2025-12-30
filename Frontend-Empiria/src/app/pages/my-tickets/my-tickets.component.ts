@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TicketService } from '../../core/services/ticket.service';
 import { Observable } from 'rxjs';
@@ -30,6 +30,8 @@ export class MyTicketsComponent implements OnInit {
     loading = true;
     error: string | null = null;
 
+    private cdr = inject(ChangeDetectorRef);
+
     constructor(private ticketService: TicketService) { }
 
     ngOnInit() {
@@ -39,15 +41,20 @@ export class MyTicketsComponent implements OnInit {
     loadMyTickets() {
         this.loading = true;
         this.error = null;
+        this.cdr.detectChanges(); // Force check before load
+
         this.ticketService.getMyTickets().subscribe({
             next: (response: any) => {
+                console.log('Mis Entradas:', response.data);
                 this.tickets = response.data || [];
                 this.loading = false;
+                this.cdr.detectChanges(); // Force check after load
             },
             error: (err) => {
                 console.error('Error loading tickets:', err);
                 this.error = err.error?.msg || 'Error al cargar las entradas';
                 this.loading = false;
+                this.cdr.detectChanges(); // Force check on error
             }
         });
     }
@@ -99,6 +106,21 @@ export class MyTicketsComponent implements OnInit {
                 return 'Expirada';
             default:
                 return 'Pendiente';
+        }
+    }
+
+    getQrUnavailableMessage(status: string): string {
+        switch (status?.toLowerCase()) {
+            case 'pending':
+                return 'Pago Pendiente';
+            case 'approved':
+                return 'Generando QR...';
+            case 'rejected':
+                return 'Pago Rechazado';
+            case 'cancelled':
+                return 'Cancelado';
+            default:
+                return 'No disponible';
         }
     }
 

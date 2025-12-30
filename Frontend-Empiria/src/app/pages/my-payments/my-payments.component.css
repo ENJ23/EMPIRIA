@@ -1,262 +1,302 @@
 .my-payments-container {
-    padding: 2rem;
-    max-width: 1200px;
+    padding: var(--spacing-xl) 0;
+    min-height: 80vh;
+    max-width: 1000px;
     margin: 0 auto;
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
 }
 
-.my-payments-container h2 {
-    font-size: 2rem;
-    margin-bottom: 2rem;
-    color: #333;
-}
-
-.loading,
-.error-message,
-.empty-state {
-    padding: 3rem 2rem;
+.page-header {
     text-align: center;
-    background: #f5f5f5;
-    border-radius: 8px;
+    margin-bottom: var(--spacing-xl);
 }
 
-.loading p,
-.empty-state p {
-    color: #666;
+.page-header h2 {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+    color: white;
+}
+
+.subtitle {
+    color: var(--text-muted);
     font-size: 1.1rem;
 }
 
-.empty-state .subtitle {
-    color: #999;
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
+/* States */
+.loading-state,
+.error-state,
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.error-message {
-    background: #fee;
-    border-left: 4px solid #f44;
+.empty-icon {
+    font-size: 4rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
 }
 
-.error-message p {
-    color: #c33;
-    margin-bottom: 1rem;
-}
-
-.btn-retry {
-    background: #f44;
-    color: white;
-    border: none;
-    padding: 0.7rem 1.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.95rem;
-}
-
-.btn-retry:hover {
-    background: #d33;
-}
-
-.payments-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 2rem;
-}
-
-.payment-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.payment-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.payment-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1.5rem;
+/* Payments List */
+.payments-list {
     display: flex;
-    justify-content: space-between;
-    align-items: start;
-    gap: 1rem;
+    flex-direction: column;
+    gap: var(--spacing-md);
 }
 
-.payment-header h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    flex: 1;
+.payment-row-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.2s ease;
 }
 
-.payment-status {
-    display: inline-block;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    white-space: nowrap;
+.payment-row-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
-.status-approved {
-    background: #4caf50;
+.payment-info-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.event-icon {
+    width: 45px;
+    height: 45px;
+    background: rgba(112, 0, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.info-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
     color: white;
 }
 
-.status-pending {
-    background: #ff9800;
-    color: white;
-}
-
-.status-rejected {
-    background: #f44;
-    color: white;
+.date {
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .payment-details {
-    padding: 1.5rem;
-    background: #f9f9f9;
-}
-
-.detail-row {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.8rem;
-    font-size: 0.95rem;
+    gap: 30px;
 }
 
-.detail-row:last-child {
-    margin-bottom: 0;
-}
-
-.detail-row strong {
-    color: #333;
-    font-weight: 600;
-    min-width: 130px;
-}
-
-.detail-row span {
-    color: #666;
-    text-align: right;
-    flex: 1;
-}
-
-.reservation-section {
-    padding: 1.5rem;
-    border-top: 1px solid #eee;
-    background: #f0f8ff;
-}
-
-.reservation-active {
-    border: 2px solid #ff9800;
-    border-radius: 4px;
-    padding: 1rem;
-    background: #fff8e1;
-}
-
-.reservation-expired {
-    border: 2px solid #999;
-    border-radius: 4px;
-    padding: 1rem;
-    background: #f5f5f5;
-    opacity: 0.7;
-}
-
-.reservation-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.reservation-header strong {
-    color: #333;
-}
-
-.reservation-time {
-    font-weight: bold;
-    color: #ff9800;
-}
-
-.reservation-note {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.payment-actions {
-    padding: 1.5rem;
-    border-top: 1px solid #eee;
+.detail-item {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
 }
 
-.btn-pay-now {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.value {
+    color: white;
+    font-weight: 500;
+}
+
+.value.price {
+    color: var(--secondary-color);
+    font-weight: 700;
+}
+
+/* Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-icon {
+    font-size: 14px;
+}
+
+.status-approved {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.status-pending {
+    background: rgba(255, 152, 0, 0.15);
+    color: #FF9800;
+    border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.status-rejected,
+.status-cancelled {
+    background: rgba(244, 67, 54, 0.15);
+    color: #F44336;
+    border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
+/* Actions */
+.btn-glow {
+    background: linear-gradient(135deg, #7000FF, #9D50FF);
+    color: white;
+    box-shadow: 0 4px 15px rgba(112, 0, 255, 0.3);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-glow:hover {
+    box-shadow: 0 4px 20px rgba(112, 0, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    width: 90%;
+    max-width: 400px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    padding: 25px;
+    text-align: center;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: white;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.qr-container {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.qr-container img {
+    width: 180px;
+    height: 180px;
+    display: block;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    border-radius: 8px;
+}
+
+.btn-primary {
+    background: #009EE3;
+    /* Mercado Pago Blue */
     color: white;
     border: none;
-    padding: 0.9rem 1.5rem;
-    border-radius: 4px;
+    font-weight: 600;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
 }
 
-.btn-pay-now:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.btn-primary:hover {
+    background: #0089C5;
 }
 
-.approved-message {
-    background: #e8f5e9;
-    color: #2e7d32;
-    padding: 1rem;
-    border-radius: 4px;
-    font-weight: 600;
-    text-align: center;
+.reservation-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 152, 0, 0.1);
+    border-radius: 6px;
+    color: #FF9800;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.rejected-message {
-    background: #ffebee;
-    color: #c62828;
-    padding: 1rem;
-    border-radius: 4px;
-    font-weight: 600;
-    text-align: center;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-    .my-payments-container {
-        padding: 1rem;
-    }
-
-    .my-payments-container h2 {
-        font-size: 1.5rem;
-    }
-
-    .payments-grid {
+    .payment-row-card {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 20px;
+        text-align: center;
     }
 
-    .payment-header {
+    .payment-info-main {
         flex-direction: column;
-        gap: 0.5rem;
+        text-align: center;
     }
 
-    .payment-header h3 {
-        font-size: 1.1rem;
+    .payment-details {
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
     }
 
-    .detail-row {
-        flex-direction: column;
-        gap: 0.3rem;
-    }
-
-    .detail-row strong,
-    .detail-row span {
-        text-align: left;
+    .payment-status-col,
+    .payment-actions-col {
+        display: flex;
+        justify-content: center;
     }
 }

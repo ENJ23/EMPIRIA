@@ -1,92 +1,99 @@
 <div class="my-payments-container">
-    <h2>Mis Pagos</h2>
+    <div class="page-header">
+        <h2>Mis <span class="text-gradient">Pagos</span></h2>
+        <p class="subtitle">Historial de transacciones y estados</p>
+    </div>
 
     <!-- Loading State -->
-    <div *ngIf="loading" class="loading">
-        <p>Cargando tus pagos...</p>
+    <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando historial...</p>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error && !loading" class="error-message">
+    <div *ngIf="error && !loading" class="error-state">
+        <span class="material-icons error-icon">error_outline</span>
         <p>{{ error }}</p>
-        <button (click)="loadMyPayments()" class="btn-retry">Reintentar</button>
+        <button (click)="loadMyPayments()" class="btn btn-outline">Reintentar</button>
     </div>
 
     <!-- Empty State -->
     <div *ngIf="!loading && !error && payments.length === 0" class="empty-state">
-        <p>No tienes pagos aún</p>
-        <p class="subtitle">Los pagos que realices aparecerán aquí</p>
+        <span class="material-icons empty-icon">receipt_long</span>
+        <h3>No tienes pagos registrados</h3>
+        <p>Tus compras aparecerán aquí.</p>
     </div>
 
     <!-- Payments List -->
-    <div *ngIf="!loading && payments.length > 0" class="payments-grid">
-        <div *ngFor="let payment of payments" class="payment-card">
-            <!-- Header with Event Title -->
-            <div class="payment-header">
-                <h3>{{ payment.event?.title }}</h3>
-                <span [ngClass]="getStatusClass(payment.status)" class="payment-status">
+    <div *ngIf="!loading && payments.length > 0" class="payments-list">
+        <div *ngFor="let payment of payments" class="payment-row-card">
+
+            <div class="payment-info-main">
+                <div class="event-icon">
+                    <span class="material-icons">event</span>
+                </div>
+                <div class="info-content">
+                    <h3>{{ payment.event?.title }}</h3>
+                    <span class="date">{{ formatDate(payment.createdAt) }}</span>
+                </div>
+            </div>
+
+            <div class="payment-details">
+                <div class="detail-item">
+                    <span class="label">Cantidad</span>
+                    <span class="value">{{ payment.quantity }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Total</span>
+                    <span class="value price">{{ payment.quantity > 0 ? ((payment.status === 'pending' ||
+                        !payment.mp_payment_id) ? 'Pendiente' : '$' + (payment.quantity * 5000)) : 'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="payment-status-col">
+                <span class="status-pill" [ngClass]="getStatusClass(payment.status)">
+                    <span class="material-icons status-icon">{{ getStatusIcon(payment.status) }}</span>
                     {{ getStatusLabel(payment.status) }}
                 </span>
             </div>
 
-            <!-- Payment Details -->
-            <div class="payment-details">
-                <div class="detail-row">
-                    <strong>Fecha de evento:</strong>
-                    <span>{{ formatDate(payment.event?.date) }}</span>
-                </div>
-                <div class="detail-row">
-                    <strong>Ubicación:</strong>
-                    <span>{{ payment.event?.location }}</span>
-                </div>
-                <div class="detail-row">
-                    <strong>Cantidad:</strong>
-                    <span>{{ payment.quantity }} entrada(s)</span>
-                </div>
-                <div class="detail-row">
-                    <strong>Monto:</strong>
-                    <span>${{ payment.quantity > 0 ? (payment.mp_payment_id ? '...' : 'Pendiente') : 'N/A' }}</span>
-                </div>
-                <div class="detail-row">
-                    <strong>Pagado:</strong>
-                    <span>{{ formatDate(payment.createdAt) }}</span>
-                </div>
-            </div>
-
-            <!-- Reservation Status Section -->
-            <div *ngIf="payment.isReserved" class="reservation-section">
-                <div [ngClass]="payment.isReservationActive ? 'reservation-active' : 'reservation-expired'">
-                    <div class="reservation-header">
-                        <strong>Estado de Reserva:</strong>
-                        <span class="reservation-time">
-                            {{ getTimeRemainingLabel(payment) }}
-                        </span>
-                    </div>
-                    <p class="reservation-note">
-                        <em>Accede a tu código QR antes de que expire la reserva</em>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Actions Section -->
-            <div class="payment-actions">
-                <!-- Pay Now Button (if still pending/active) -->
-                <button 
-                    *ngIf="payment.status === 'pending' && payment.canAccessQR && payment.mp_init_point"
-                    (click)="goToPayment(payment)" 
-                    class="btn-pay-now">
+            <div class="payment-actions-col">
+                <button *ngIf="payment.status === 'pending' && payment.canAccessQR" (click)="openPaymentModal(payment)"
+                    class="btn btn-sm btn-glow">
                     Ir a Pagar
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <!-- Approved Message -->
-                <div *ngIf="payment.status === 'approved'" class="approved-message">
-                    ✓ Pago completado correctamente
-                </div>
+<!-- Payment Modal -->
+<div class="modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Finalizar Pago</h3>
+            <button class="close-btn" (click)="closePaymentModal()">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
 
-                <!-- Rejected/Cancelled Message -->
-                <div *ngIf="payment.status === 'rejected' || payment.status === 'cancelled'" class="rejected-message">
-                    ✗ Este pago no pudo procesarse
-                </div>
+        <div class="modal-body">
+            <p class="modal-subtitle">Escanea el QR o usa el botón para pagar con Mercado Pago</p>
+
+            <div class="qr-container" *ngIf="selectedPaymentQr">
+                <img [src]="selectedPaymentQr" alt="QR de Pago">
+            </div>
+
+            <div class="modal-actions">
+                <a *ngIf="selectedPaymentLink" [href]="selectedPaymentLink" target="_blank"
+                    class="btn btn-block btn-primary">
+                    <span class="material-icons">payment</span> Pagar con Mercado Pago
+                </a>
+            </div>
+
+            <div class="reservation-info" *ngIf="selectedPayment?.isReservationActive">
+                <span class="material-icons">timer</span>
+                <span>Tu reserva expira en {{ selectedPayment?.timeRemainingMinutes }} minutos</span>
             </div>
         </div>
     </div>

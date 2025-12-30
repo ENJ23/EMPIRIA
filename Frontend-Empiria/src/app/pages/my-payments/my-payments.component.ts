@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PaymentService } from '../../core/services/payment.service';
 import { Subject, interval, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import * as QRCode from 'qrcode';
 
 interface PaymentData {
     id: string;
@@ -17,14 +18,14 @@ interface PaymentData {
     status: string; // 'pending', 'approved', 'rejected', 'cancelled'
     createdAt: string;
     updatedAt: string;
-    
+
     // Reservation info for QR re-access
     isReserved: boolean;
     reservationConfirmed: boolean;
     reservedUntil: string | null;
     isReservationActive: boolean;
     timeRemainingMinutes: number;
-    
+
     // Mercado Pago link
     canAccessQR: boolean;
     mp_init_point: string | null;
@@ -44,6 +45,15 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
 
     private destroy$ = new Subject<void>();
     private timerSubscription: Subscription | null = null;
+
+    // Modal State
+    showPaymentModal = false;
+    selectedPaymentQr: string | null = null;
+    selectedPaymentLink: string | null = null;
+    selectedPayment: PaymentData | null = null;
+
+    private cdr = inject(ChangeDetectorRef);
+    private ngZone = inject(NgZone);
 
     constructor(private paymentService: PaymentService) { }
 
@@ -66,25 +76,54 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
     loadMyPayments() {
         this.loading = true;
         this.error = null;
+        this.cdr.detectChanges(); // Force check
+
         this.paymentService.getMyPayments().subscribe({
             next: (response: any) => {
                 this.payments = response.data || [];
                 this.loading = false;
+                this.cdr.detectChanges(); // Force check
             },
             error: (err) => {
                 console.error('Error loading payments:', err);
                 this.error = err.error?.msg || 'Error al cargar los pagos';
                 this.loading = false;
+                this.cdr.detectChanges(); // Force check
             }
         });
     }
 
-    goToPayment(payment: PaymentData) {
-        if (payment.mp_init_point) {
-            window.open(payment.mp_init_point, '_blank');
-        } else {
+    openPaymentModal(payment: PaymentData) {
+        if (!payment.mp_init_point) {
             alert('Enlace de pago no disponible');
+            return;
         }
+
+        this.selectedPayment = payment;
+        this.selectedPaymentLink = payment.mp_init_point;
+
+        // Generate QR on the fly
+        QRCode.toDataURL(this.selectedPaymentLink)
+            .then(url => {
+                this.ngZone.run(() => {
+                    this.selectedPaymentQr = url;
+                    this.showPaymentModal = true;
+                    this.cdr.detectChanges();
+                });
+            })
+            .catch(err => {
+                console.error('Error generating QR', err);
+                this.ngZone.run(() => {
+                    alert('Error al generar el código QR');
+                });
+            });
+    }
+
+    closePaymentModal() {
+        this.showPaymentModal = false;
+        this.selectedPayment = null;
+        this.selectedPaymentQr = null;
+        this.selectedPaymentLink = null;
     }
 
     getStatusClass(status: string): string {
@@ -113,6 +152,21 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
                 return 'Cancelado';
             default:
                 return 'Desconocido';
+        }
+    }
+
+    getStatusIcon(status: string): string {
+        switch (status?.toLowerCase()) {
+            case 'approved':
+                return 'check_circle';
+            case 'pending':
+                return 'schedule';
+            case 'rejected':
+                return 'cancel';
+            case 'cancelled':
+                return 'block';
+            default:
+                return 'help_outline';
         }
     }
 
