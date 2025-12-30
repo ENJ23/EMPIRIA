@@ -1,4 +1,5 @@
 const Ticket = require('../models/Ticket');
+const { Types } = require('mongoose');
 
 /**
  * Public: Check ticket status by Payment record ID (no JWT required)
@@ -249,24 +250,31 @@ const listTickets = async (req, res) => {
 const getMyTickets = async (req, res) => {
     try {
         const userId = req.uid; // From JWT
-        console.log(`[getMyTickets] Fetching tickets for user: ${userId}`);
+        const objectId = Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null;
+        const userQuery = objectId ? { $or: [{ user: objectId }, { user: userId }] } : { user: userId };
 
-        const tickets = await Ticket.find({ user: userId })
+        console.log('[getMyTickets] Fetching tickets for user:', userId, 'query:', JSON.stringify(userQuery));
+
+        const tickets = await Ticket.find(userQuery)
             .populate('event', 'title date location capacity')
             .populate('payment', 'status mp_payment_id')
             .sort({ purchasedAt: -1 });
 
+        const mapped = tickets.map(t => ({
+            id: t._id,
+            event: t.event,
+            status: t.status,
+            amount: t.amount,
+            purchasedAt: t.purchasedAt,
+            entryQr: t.entryQr,
+            isUsed: t.isUsed || false
+        }));
+
         res.json({
             status: 1,
-            tickets: tickets.map(t => ({
-                id: t._id,
-                event: t.event,
-                status: t.status,
-                amount: t.amount,
-                purchasedAt: t.purchasedAt,
-                entryQr: t.entryQr,
-                isUsed: t.isUsed || false
-            }))
+            msg: 'Entradas obtenidas correctamente',
+            data: mapped,
+            count: mapped.length
         });
     } catch (error) {
         console.error('[getMyTickets] Error:', error);
