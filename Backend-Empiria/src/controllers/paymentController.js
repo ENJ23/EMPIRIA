@@ -1,4 +1,5 @@
 const MercadoPago = require('mercadopago');
+const QRCode = require('qrcode');
 const Event = require('../models/Event');
 const Payment = require('../models/Payment');
 const Ticket = require('../models/Ticket');
@@ -341,8 +342,34 @@ const receiveWebhook = async (req, res) => {
                             purchasedAt: new Date()
                         });
                     }
-                    await Ticket.insertMany(bulkTickets, { ordered: false });
+                    const createdTickets = await Ticket.insertMany(bulkTickets, { ordered: false });
                     console.log(`[webhook] ✅ Created ${remainingToCreate} ticket(s) for User: ${userId}, Event: ${eventId}`);
+
+                    // Generate QR codes for each created ticket
+                    console.log(`[webhook] Generating QR codes for ${createdTickets.length} tickets...`);
+                    const qrPromises = createdTickets.map(async (ticket) => {
+                        try {
+                            const qrData = JSON.stringify({
+                                ticketId: ticket._id.toString(),
+                                eventId: ticket.event.toString(),
+                                userId: ticket.user.toString(),
+                                timestamp: ticket.purchasedAt.getTime()
+                            });
+                            const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+                                errorCorrectionLevel: 'H',
+                                type: 'image/png',
+                                width: 300,
+                                margin: 2
+                            });
+                            ticket.entryQr = qrCodeDataURL;
+                            await ticket.save();
+                            console.log(`[webhook] ✅ QR generated for ticket: ${ticket._id}`);
+                        } catch (qrError) {
+                            console.error(`[webhook] ❌ QR generation failed for ticket ${ticket._id}:`, qrError.message);
+                        }
+                    });
+                    await Promise.all(qrPromises);
+                    console.log(`[webhook] ✅ All QR codes generated successfully`);
 
                     // Increment ticketsSold for the event
                     await Event.findByIdAndUpdate(

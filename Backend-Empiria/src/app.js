@@ -14,10 +14,10 @@ const promotionalEmailJob = require('./jobs/promotionalEmailJob');
 const app = express();
 
 // Middleware
-// Middleware
 // CORS: restrict to known origins
 const defaultOrigins = [
     'http://localhost:4200',
+    'https://empiriajujuy.vercel.app',
     process.env.FRONTEND_URL || '',
 ].filter(Boolean);
 const allowedOrigins = (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : defaultOrigins);
@@ -28,7 +28,9 @@ app.use(cors({
         if (allowedOrigins.includes(origin)) return callback(null, true);
         return callback(new Error('Not allowed by CORS'));
     },
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-token']
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-token'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 // Security headers
