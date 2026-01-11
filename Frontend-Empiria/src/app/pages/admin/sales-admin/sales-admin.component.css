@@ -86,6 +86,12 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
+.event-selector option {
+    background-color: #141414;
+    color: white;
+    padding: 10px;
+}
+
 .export-actions {
     display: flex;
     gap: 10px;

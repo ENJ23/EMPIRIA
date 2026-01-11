@@ -7,6 +7,10 @@ try { helmet = require('helmet'); } catch(e) { helmet = null; }
 try { rateLimit = require('express-rate-limit'); } catch(e) { rateLimit = null; }
 require('dotenv').config();
 
+// ========== IMPORTAR JOBS DE EMAIL ==========
+const eventReminderJob = require('./jobs/eventReminderJob');
+const promotionalEmailJob = require('./jobs/promotionalEmailJob');
+
 const app = express();
 
 // Middleware
@@ -41,7 +45,19 @@ app.use(express.json());
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
-    .then(() => console.log('✅ Connected to MongoDB'))
+    .then(() => {
+        console.log('✅ Connected to MongoDB');
+        
+        // ========== INICIAR JOBS DE EMAIL AUTOMÁTICO ==========
+        console.log('\n🤖 Iniciando sistema de emails automáticos...');
+        console.log('   ⏰ Job de recordatorios: Cada día a las 9:00 AM');
+        console.log('   📢 Job de promociones: Cada día a las 10:00 AM');
+        console.log('   📧 Job de cambios: Se ejecuta al actualizar evento\n');
+        
+        // Los jobs se inicializan automáticamente al requerir los módulos
+        eventReminderJob;
+        promotionalEmailJob;
+    })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 app.use('/api/auth', require('./routes/auth.routes'));
@@ -49,6 +65,7 @@ app.use('/api/events', require('./routes/events.routes'));
 app.use('/api/payments', require('./routes/payment.routes'));
 app.use('/api/tickets', require('./routes/ticket.routes'));
 app.use('/api/reservations', require('./routes/reservations.routes'));
+app.use('/api/promotions', require('./routes/promotion.routes'));  // ← Nueva ruta para promociones
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

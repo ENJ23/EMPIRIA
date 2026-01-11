@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../../../core/services/event.service';
@@ -18,6 +18,8 @@ export class EventsAdminComponent implements OnInit {
     isSaving = false;
     editingId: string | null = null;
     form: any = this.emptyForm();
+
+    private cdr = inject(ChangeDetectorRef);
 
     constructor(private eventService: EventService) { }
 
@@ -91,9 +93,11 @@ export class EventsAdminComponent implements OnInit {
                 this.events$ = this.eventService.getEvents();
                 this.isSaving = false;
                 this.cancel();
+                this.cdr.detectChanges(); // Force UI update
             },
             error: () => {
                 this.isSaving = false;
+                this.cdr.detectChanges(); // Force UI update
             }
         });
     }

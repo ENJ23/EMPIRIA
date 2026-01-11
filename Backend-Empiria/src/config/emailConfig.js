@@ -8,20 +8,20 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     // OPCIÓN 1: Gmail (recomendado para desarrollo)
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,        // tu_email@gmail.com
-        pass: process.env.EMAIL_PASSWORD     // Contraseña de app generada
-    }
+    // service: 'gmail',
+    // auth: {
+    //     user: process.env.EMAIL_USER,        // tu_email@gmail.com
+    //     pass: process.env.EMAIL_PASSWORD     // Contraseña de app generada
+    // }
     
     // OPCIÓN 2: SendGrid (recomendado para producción)
-    // host: 'smtp.sendgrid.net',
-    // port: 587,
-    // secure: false,
-    // auth: {
-    //     user: 'apikey',
-    //     pass: process.env.SENDGRID_API_KEY
-    // }
+    host: 'smtp.sendgrid.net',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
     
     // OPCIÓN 3: Mailtrap (para testing)
     // host: 'smtp.mailtrap.io',

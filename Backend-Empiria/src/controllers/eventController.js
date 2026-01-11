@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const Reservation = require('../models/Reservation');
+const { notifyEventDateChange } = require('../jobs/eventChangeJob');
 
 const getEvents = async (req, res) => {
     try {
@@ -106,15 +107,61 @@ const createEvent = async (req, res) => {
 
 const updateEvent = async (req, res) => {
     const { id } = req.params;
+    
     try {
-        const updated = await Event.findByIdAndUpdate(id, req.body, { new: true });
-        if (!updated) {
-            return res.status(404).json({ status: 0, msg: 'Evento no encontrado' });
+        // Obtener evento actual antes de actualizar
+        const oldEvent = await Event.findById(id);
+        
+        if (!oldEvent) {
+            return res.status(404).json({ 
+                status: 0, 
+                msg: 'Evento no encontrado' 
+            });
         }
-        res.json({ status: 1, msg: 'Evento actualizado', event: updated });
+
+        // Actualizar evento
+        const updated = await Event.findByIdAndUpdate(id, req.body, { new: true });
+
+        // Si cambió la fecha, notificar a todos los usuarios con tickets
+        let emailsNotified = 0;
+        let notificationError = null;
+
+        if (oldEvent.date.getTime() !== updated.date.getTime()) {
+            console.log(`\n⚠️  CAMBIO DETECTADO en fecha del evento: ${oldEvent.title}`);
+            
+            const result = await notifyEventDateChange(
+                id, 
+                oldEvent.date, 
+                updated.date
+            );
+
+            if (result.success) {
+                emailsNotified = result.notified;
+                console.log(`✅ Notificaciones completadas: ${result.notified} usuarios`);
+            } else {
+                notificationError = result.error;
+                console.log(`❌ Error en notificaciones: ${notificationError}`);
+            }
+        }
+
+        res.json({ 
+            status: 1, 
+            msg: 'Evento actualizado',
+            event: updated,
+            emailNotification: {
+                dateChanged: oldEvent.date.getTime() !== updated.date.getTime(),
+                emailsSent: emailsNotified,
+                error: notificationError
+            }
+        });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ status: 0, msg: 'Error al actualizar evento' });
+        console.error('Error updating event:', error);
+        res.status(500).json({ 
+            status: 0, 
+            msg: 'Error al actualizar evento',
+            error: error.message
+        });
     }
 };
 

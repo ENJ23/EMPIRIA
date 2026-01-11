@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../../../core/services/event.service';
@@ -23,6 +23,8 @@ export class SalesAdminComponent implements OnInit {
     totalAmount = 0;
     totalTickets = 0;
 
+    private cdr = inject(ChangeDetectorRef);
+
     constructor(private eventService: EventService, private ticketService: TicketService) { }
 
     ngOnInit() {
@@ -32,6 +34,7 @@ export class SalesAdminComponent implements OnInit {
 
     fetchAllTickets() {
         this.loading = true;
+        this.cdr.detectChanges(); // Force check before load
         console.log('[SalesAdmin] Fetching all tickets');
         this.ticketService.listTickets({ limit: 1000 }).subscribe({
             next: (res) => {
@@ -41,10 +44,12 @@ export class SalesAdminComponent implements OnInit {
                 this.applyFilter();
                 this.loading = false;
                 console.log('[SalesAdmin] Loading complete. Tickets in view:', this.tickets.length);
+                this.cdr.detectChanges(); // Force check after load
             },
-            error: (err) => { 
+            error: (err) => {
                 console.error('[SalesAdmin] Error loading tickets:', err);
-                this.loading = false; 
+                this.loading = false;
+                this.cdr.detectChanges(); // Force check on error
             }
         });
     }
@@ -89,7 +94,7 @@ export class SalesAdminComponent implements OnInit {
         const jsPDF = (await import('jspdf')).default;
         const autoTable = (await import('jspdf-autotable')).default;
         const doc = new jsPDF();
-        const head = [[ 'Cliente', 'Email', 'Evento', 'Fecha', 'Monto', 'Estado' ]];
+        const head = [['Cliente', 'Email', 'Evento', 'Fecha', 'Monto', 'Estado']];
         const body = this.tickets.map(t => [
             t.user.name || '',
             t.user.email || '',

@@ -68,6 +68,10 @@ export class AuthService {
     }
 
     isAuthenticated(): boolean {
+        // Fallback: try to restore if current value is null
+        if (!this.currentUser()) {
+            this.restoreSession();
+        }
         return !!this.currentUser();
     }
 
@@ -85,15 +89,27 @@ export class AuthService {
 
     private setSession(user: User, token: string) {
         this.currentUser.set(user);
-        localStorage.setItem('empiria_user', JSON.stringify(user));
-        localStorage.setItem('empiria_token', token);
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('empiria_user', JSON.stringify(user));
+            localStorage.setItem('empiria_token', token);
+        }
     }
 
     private restoreSession() {
         if (typeof localStorage !== 'undefined') {
-            const stored = localStorage.getItem('empiria_user');
-            if (stored) {
-                this.currentUser.set(JSON.parse(stored));
+            try {
+                const stored = localStorage.getItem('empiria_user');
+                const token = localStorage.getItem('empiria_token');
+
+                if (stored && token) {
+                    const user = JSON.parse(stored);
+                    this.currentUser.set(user);
+                }
+            } catch (e) {
+                console.error('Error restoring session', e);
+                // Clear potentially corrupted data
+                localStorage.removeItem('empiria_user');
+                localStorage.removeItem('empiria_token');
             }
         }
     }

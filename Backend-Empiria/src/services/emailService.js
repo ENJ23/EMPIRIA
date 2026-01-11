@@ -1,5 +1,5 @@
 // src/services/emailService.js
-const nodemailer = require('nodemailer');
+const transporter = require('../config/emailConfig');
 const handlebars = require('handlebars');
 const fs = require('fs');
 const path = require('path');
@@ -7,13 +7,7 @@ const EmailLog = require('../models/EmailLog');
 
 class EmailService {
     constructor() {
-        this.transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD
-            }
-        });
+        this.transporter = transporter;
     }
 
     /**
@@ -47,7 +41,7 @@ class EmailService {
             const htmlContent = this.loadTemplate(templateName, templateData);
 
             const mailOptions = {
-                from: `${process.env.EMAIL_FROM_NAME || 'Empiria Jujuy'} <${process.env.EMAIL_USER}>`,
+                from: `${process.env.EMAIL_FROM_NAME || 'Empiria Jujuy'} <${process.env.EMAIL_FROM}>`,
                 to,
                 subject,
                 html: htmlContent
