@@ -7,9 +7,21 @@ try { helmet = require('helmet'); } catch(e) { helmet = null; }
 try { rateLimit = require('express-rate-limit'); } catch(e) { rateLimit = null; }
 require('dotenv').config();
 
-// ========== IMPORTAR JOBS DE EMAIL ==========
-const eventReminderJob = require('./jobs/eventReminderJob');
-const promotionalEmailJob = require('./jobs/promotionalEmailJob');
+// ========== IMPORTAR JOBS DE EMAIL (CON MANEJO DE ERRORES) ==========
+let eventReminderJob;
+let promotionalEmailJob;
+
+try {
+    eventReminderJob = require('./jobs/eventReminderJob');
+} catch (error) {
+    console.error('⚠️  Error cargando eventReminderJob:', error.message);
+}
+
+try {
+    promotionalEmailJob = require('./jobs/promotionalEmailJob');
+} catch (error) {
+    console.error('⚠️  Error cargando promotionalEmailJob:', error.message);
+}
 
 const app = express();
 
@@ -69,14 +81,12 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
         console.log('✅ Connected to MongoDB');
         
         // ========== INICIAR JOBS DE EMAIL AUTOMÁTICO ==========
-        console.log('\n🤖 Iniciando sistema de emails automáticos...');
-        console.log('   ⏰ Job de recordatorios: Cada día a las 9:00 AM');
-        console.log('   📢 Job de promociones: Cada día a las 10:00 AM');
-        console.log('   📧 Job de cambios: Se ejecuta al actualizar evento\n');
-        
-        // Los jobs se inicializan automáticamente al requerir los módulos
-        eventReminderJob;
-        promotionalEmailJob;
+        if (eventReminderJob || promotionalEmailJob) {
+            console.log('\n🤖 Iniciando sistema de emails automáticos...');
+            if (eventReminderJob) console.log('   ⏰ Job de recordatorios: Cada día a las 9:00 AM');
+            if (promotionalEmailJob) console.log('   📢 Job de promociones: Cada día a las 10:00 AM');
+            console.log('   📧 Job de cambios: Se ejecuta al actualizar evento\n');
+        }
     })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
