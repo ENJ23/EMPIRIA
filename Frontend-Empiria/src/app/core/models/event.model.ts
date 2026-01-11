@@ -14,6 +14,9 @@ export interface Event {
     isPreventa: boolean;
     preventaPrice?: number;
     preventaLimit?: number;
+    preventaTicketsSold?: number;
+    isFree?: boolean;          // NUEVO: evento gratuito
+    onlyGeneralPrice?: boolean; // NUEVO: solo precio general (sin VIP)
     categories: string[];
 }
 

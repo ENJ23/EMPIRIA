@@ -155,6 +155,42 @@ const getTicketByPaymentId = async (req, res) => {
 };
 
 /**
+ * Get ALL Tickets by Payment ID (PUBLIC - no JWT required)
+ * Used to display all purchased tickets on the success page
+ */
+const getTicketsByPaymentId = async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        console.log(`[getTicketsByPaymentId] Request for paymentId: ${paymentId}`);
+
+        if (!paymentId) {
+            return res.status(400).json({ status: 0, msg: 'paymentId es requerido' });
+        }
+
+        // Find all tickets for this payment
+        const tickets = await Ticket.find({ payment: paymentId })
+            .sort({ purchasedAt: -1 })
+            .populate('event', 'title date location imageUrl')
+            .populate('user', 'name email');
+
+        console.log(`[getTicketsByPaymentId] Found ${tickets.length} tickets`);
+
+        if (!tickets || tickets.length === 0) {
+            return res.status(404).json({ status: 0, msg: 'No se encontraron tickets para este pago' });
+        }
+
+        res.json({
+            status: 1,
+            tickets
+        });
+
+    } catch (error) {
+        console.error('Error fetching tickets by payment:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
+/**
  * Get Ticket by ID (PUBLIC - no JWT required, no ownership check)
  * Used as last-resort fallback when user has no JWT
  * Security: The ticket ID is treated as an access token
@@ -198,7 +234,7 @@ const listTickets = async (req, res) => {
     try {
         console.log('[listTickets] Called with query:', req.query);
         console.log('[listTickets] User from JWT:', req.uid);
-        
+
         const { eventId, status, page = 1, limit = 100 } = req.query;
 
         const query = {};
@@ -229,7 +265,7 @@ const listTickets = async (req, res) => {
         ]);
 
         console.log(`[listTickets] Found ${tickets.length} tickets, total: ${total}`);
-        
+
         // Log first ticket's event ID for debugging
         if (tickets.length > 0 && tickets[0].event) {
             console.log(`[listTickets] First ticket event ID:`, tickets[0].event._id.toString());
@@ -288,6 +324,7 @@ module.exports = {
     getTicketById,
     getTicketByPaymentId,
     getTicketByIdPublic,
+    getTicketsByPaymentId, // Export new method
     listTickets,
     getMyTickets
 };

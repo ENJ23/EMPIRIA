@@ -40,6 +40,9 @@ export class EventsAdminComponent implements OnInit {
             isPreventa: false,
             preventaPrice: undefined,
             preventaLimit: undefined,
+            preventaTicketsSold: 0,
+            isFree: false,              // NUEVO
+            onlyGeneralPrice: false,    // NUEVO
             categories: [] as string[]
         };
     }
@@ -65,6 +68,9 @@ export class EventsAdminComponent implements OnInit {
             isPreventa: ev.isPreventa,
             preventaPrice: ev.preventaPrice,
             preventaLimit: ev.preventaLimit,
+            preventaTicketsSold: ev.preventaTicketsSold || 0,
+            isFree: ev.isFree || false,              // NUEVO
+            onlyGeneralPrice: ev.onlyGeneralPrice || false,  // NUEVO
             categories: ev.categories || []
         };
     }

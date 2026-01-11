@@ -121,6 +121,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- NUEVO: Opciones de tipo de evento -->
+                <div class="form-section highlight-section">
+                    <h4>Tipo de Evento</h4>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="isFreeCheck" [(ngModel)]="form.isFree" name="isFree" />
+                        <label for="isFreeCheck">
+                            <span class="material-icons">card_giftcard</span>
+                            Evento Gratuito (sin necesidad de pagar, solo solicitar entrada)
+                        </label>
+                    </div>
+                    
+                    <div class="checkbox-wrapper" *ngIf="!form.isFree">
+                        <input type="checkbox" id="onlyGeneralCheck" [(ngModel)]="form.onlyGeneralPrice" name="onlyGeneralPrice" />
+                        <label for="onlyGeneralCheck">
+                            <span class="material-icons">single_bed</span>
+                            Solo Precio General (sin opción VIP/Premium)
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -142,6 +162,7 @@
                     <th>Evento</th>
                     <th>Fecha</th>
                     <th>Ubicación</th>
+                    <th>Entradas</th>
                     <th>Estado</th>
                     <th class="text-right">Acciones</th>
                 </tr>
@@ -153,7 +174,12 @@
                             <div class="event-thumb" [style.background-image]="'url(' + event.imageUrl + ')'"></div>
                             <div class="event-text">
                                 <span class="title">{{ event.title }}</span>
-                                <span class="desc">{{ event.description | slice:0:40 }}...</span>
+                                <span class="desc" *ngIf="event.isFree">
+                                    <span class="badge-free">GRATIS</span>
+                                </span>
+                                <span class="desc" *ngIf="!event.isFree && event.onlyGeneralPrice">
+                                    <span class="badge-general">SOLO GENERAL</span>
+                                </span>
                             </div>
                         </div>
                     </td>
@@ -167,9 +193,23 @@
                         <span class="material-icons small-icon">place</span> {{ event.location }}
                     </td>
                     <td>
+                        <div class="stock-info">
+                            <div class="stock-bar">
+                                <div class="stock-used" [style.width]="(event.ticketsSold / event.capacity * 100) + '%'"></div>
+                            </div>
+                            <span class="stock-text">
+                                {{ event.ticketsSold }} / {{ event.capacity }}
+                            </span>
+                            <span class="stock-remaining" *ngIf="event.isPreventa">
+                                Preventa: {{ event.preventaTicketsSold || 0 }} / {{ event.preventaLimit }}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
                         <span class="status-pill" [class.preventa]="event.isPreventa"
-                            [class.active]="!event.isPreventa">
-                            {{ event.isPreventa ? 'PREVENTA' : 'GENERAL' }}
+                            [class.active]="!event.isPreventa"
+                            [class.free]="event.isFree">
+                            {{ event.isFree ? 'GRATIS' : (event.isPreventa ? 'PREVENTA' : 'GENERAL') }}
                         </span>
                     </td>
                     <td class="actions-cell text-right">

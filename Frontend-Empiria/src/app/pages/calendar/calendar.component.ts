@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
@@ -17,6 +17,8 @@ export class CalendarComponent implements OnInit {
     currentMonth: Date = new Date();
     events: Event[] = [];
 
+    private cdr = inject(ChangeDetectorRef);
+
     constructor(private eventService: EventService) { }
 
     ngOnInit() {
@@ -25,6 +27,7 @@ export class CalendarComponent implements OnInit {
             next: (events) => {
                 this.events = events;
                 // No need to regenerate grid, just the events on top of it
+                this.cdr.detectChanges(); // Force UI update
             },
             error: (err) => console.error('Error loading events for calendar', err)
         });

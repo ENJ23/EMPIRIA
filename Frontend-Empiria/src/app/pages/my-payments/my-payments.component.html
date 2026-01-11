@@ -45,8 +45,8 @@
                 </div>
                 <div class="detail-item">
                     <span class="label">Total</span>
-                    <span class="value price">{{ payment.quantity > 0 ? ((payment.status === 'pending' ||
-                        !payment.mp_payment_id) ? 'Pendiente' : '$' + (payment.quantity * 5000)) : 'N/A' }}</span>
+                    <span class="value price">{{ payment.amount ? '$' + payment.amount : (payment.quantity > 0 &&
+                        payment.status === 'pending' ? 'Pendiente' : '$' + (payment.quantity * 5000)) }}</span>
                 </div>
             </div>
 

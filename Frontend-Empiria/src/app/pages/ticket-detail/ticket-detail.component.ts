@@ -12,8 +12,8 @@ import * as QRCode from 'qrcode';
     styleUrl: './ticket-detail.component.css'
 })
 export class TicketDetailComponent implements OnInit {
-    ticket: any = null;
-    qrCodeDataUrl: string = '';
+    tickets: any[] = []; // Changed from single ticket to array
+    qrCodes: { [key: string]: string } = {}; // Map of ticket ID to QR code
     loading = true;
 
     private route = inject(ActivatedRoute);
@@ -24,7 +24,7 @@ export class TicketDetailComponent implements OnInit {
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
         const paymentId = this.route.snapshot.queryParamMap.get('paymentId');
-        
+
         if (id) {
             this.loadTicket(id, paymentId);
         }
@@ -32,12 +32,12 @@ export class TicketDetailComponent implements OnInit {
 
     loadTicket(id: string, paymentId: string | null = null) {
         console.log(`[loadTicket] Starting with ticketId: ${id}, paymentId: ${paymentId}`);
-        
+
         this.ticketService.getTicketById(id).subscribe({
             next: async (res: any) => {
                 console.log(`[loadTicket] ✅ Successfully loaded with JWT`);
                 console.log(`[loadTicket] Response:`, res);
-                
+
                 if (!res || !res.ticket) {
                     console.error('[loadTicket] Response missing ticket data');
                     this.loading = false;
@@ -46,19 +46,20 @@ export class TicketDetailComponent implements OnInit {
                     return;
                 }
 
-                this.ticket = res.ticket;
-                console.log(`[loadTicket] Ticket assigned:`, this.ticket);
-                
-                // Generate QR - convert ID to string to avoid issues
+                this.tickets = [res.ticket]; // Wrap single ticket in array
+                console.log(`[loadTicket] Ticket assigned:`, this.tickets[0]);
+
+                // Generate QR
                 try {
-                    const ticketId = this.ticket._id?.toString?.() || this.ticket._id || '';
+                    const ticket = this.tickets[0];
+                    const ticketId = ticket._id?.toString?.() || ticket._id || '';
                     console.log(`[loadTicket] Generating QR for ID: ${ticketId}`);
-                    this.qrCodeDataUrl = await QRCode.toDataURL(ticketId);
+                    this.qrCodes[ticketId] = await QRCode.toDataURL(ticketId);
                     console.log(`[loadTicket] QR generated successfully`);
                 } catch (err) {
                     console.error('Error creating QR', err);
                 }
-                
+
                 this.loading = false;
                 console.log(`[loadTicket] Loading set to false`);
                 this.cdr.detectChanges();
@@ -66,14 +67,14 @@ export class TicketDetailComponent implements OnInit {
             },
             error: (err) => {
                 console.error('Error loading ticket with JWT:', err.status, err.statusText);
-                
+
                 // Fallback: If JWT fails but we have paymentId, try to get ticket from backend using payment
                 if (paymentId) {
                     console.log(`[loadTicket] JWT failed (${err.status}), attempting fallback with paymentId: ${paymentId}`);
                     this.loadTicketByPayment(id, paymentId);
                     return;
                 }
-                
+
                 // Also try sessionStorage if we don't have paymentId param
                 const storedPaymentId = sessionStorage.getItem('lastPaymentId');
                 if (storedPaymentId) {
@@ -81,7 +82,7 @@ export class TicketDetailComponent implements OnInit {
                     this.loadTicketByPayment(id, storedPaymentId);
                     return;
                 }
-                
+
                 // Last resort: Try without authentication (ticket might be public)
                 console.log(`[loadTicket] No paymentId available, attempting public load...`);
                 this.loadTicketPublic(id);
@@ -93,11 +94,11 @@ export class TicketDetailComponent implements OnInit {
         // Attempt to load ticket without any authentication
         // This is a last resort, relying on the backend to handle access control
         console.log(`[loadTicketPublic] Attempting to load ticket ${id} as public`);
-        
+
         this.ticketService.getTicketByIdPublic(id).subscribe({
             next: async (res: any) => {
                 console.log(`[loadTicketPublic] ✅ Successfully loaded`);
-                
+
                 if (!res || !res.ticket) {
                     console.error('[loadTicketPublic] Response missing ticket data');
                     this.loading = false;
@@ -106,15 +107,16 @@ export class TicketDetailComponent implements OnInit {
                     return;
                 }
 
-                this.ticket = res.ticket;
+                this.tickets = [res.ticket];
 
                 try {
-                    const ticketId = this.ticket._id?.toString?.() || this.ticket._id || '';
-                    this.qrCodeDataUrl = await QRCode.toDataURL(ticketId);
+                    const ticket = this.tickets[0];
+                    const ticketId = ticket._id?.toString?.() || ticket._id || '';
+                    this.qrCodes[ticketId] = await QRCode.toDataURL(ticketId);
                 } catch (err) {
                     console.error('Error creating QR', err);
                 }
-                
+
                 this.loading = false;
                 this.cdr.detectChanges();
             },
@@ -122,7 +124,7 @@ export class TicketDetailComponent implements OnInit {
                 console.error('Error loading ticket publicly:', err);
                 this.loading = false;
                 this.cdr.detectChanges();
-                
+
                 // Handle all errors
                 if (err.status === 404) {
                     alert('Entrada no encontrada.');
@@ -134,54 +136,40 @@ export class TicketDetailComponent implements OnInit {
         });
     }
 
-    loadTicketByPayment(ticketId: string, paymentId: string) {
-        // Create a backend endpoint that returns ticket by ID if the payment is approved
-        // This is a fallback that doesn't require ownership check
-        console.log(`[loadTicketByPayment] Attempting to load ticket ${ticketId} using paymentId: ${paymentId}`);
-        
-        this.ticketService.getTicketByPaymentId(paymentId).subscribe({
+    async loadTicketByPayment(ticketId: string, paymentId: string) {
+        // Fetch ALL tickets for this payment
+        console.log(`[loadTicketByPayment] Loading ALL tickets for paymentId: ${paymentId}`);
+
+        this.ticketService.getTicketsByPaymentId(paymentId).subscribe({
             next: async (res: any) => {
                 console.log(`[loadTicketByPayment] Response received:`, res);
-                
-                if (!res || !res.ticket) {
-                    console.error('[loadTicketByPayment] Response missing ticket data');
+
+                if (!res || !res.tickets || res.tickets.length === 0) {
+                    console.error('[loadTicketByPayment] No tickets found');
                     this.loading = false;
                     this.cdr.detectChanges();
-                    alert('Respuesta inválida del servidor');
+                    alert('No se encontraron entradas para este pago');
                     return;
                 }
-                
-                // Verify the ticket matches the one we're trying to access
-                // Convert both to strings for comparison
-                const returnedTicketId = res.ticket?._id?.toString?.() || res.ticket?._id || '';
-                console.log(`[loadTicketByPayment] Comparing IDs: expected='${ticketId}', received='${returnedTicketId}'`);
-                
-                if (returnedTicketId === ticketId) {
-                    console.log(`[loadTicketByPayment] ✅ Ticket loaded successfully`);
-                    this.ticket = res.ticket;
 
-                    try {
-                        this.qrCodeDataUrl = await QRCode.toDataURL(returnedTicketId);
-                    } catch (err) {
-                        console.error('Error creating QR', err);
-                    }
-                } else {
-                    console.warn(`[loadTicketByPayment] Ticket ID mismatch, but loading anyway`);
-                    this.ticket = res.ticket;
+                this.tickets = res.tickets;
+                console.log(`[loadTicketByPayment] Loaded ${this.tickets.length} tickets`);
 
+                // Generate QR for all tickets
+                for (const ticket of this.tickets) {
+                    const tId = ticket._id?.toString?.() || ticket._id || '';
                     try {
-                        this.qrCodeDataUrl = await QRCode.toDataURL(returnedTicketId);
+                        this.qrCodes[tId] = await QRCode.toDataURL(tId);
                     } catch (err) {
-                        console.error('Error creating QR', err);
+                        console.error(`Error creating QR for ${tId}`, err);
                     }
                 }
-                
+
                 this.loading = false;
-                console.log(`[loadTicketByPayment] Loading set to false`);
                 this.cdr.detectChanges();
             },
             error: (err) => {
-                console.error('Error loading ticket by payment:', err);
+                console.error('Error loading tickets by payment:', err);
                 this.loading = false;
                 this.cdr.detectChanges();
                 alert('No se pudo cargar la entrada. Intenta de nuevo.');
@@ -194,12 +182,15 @@ export class TicketDetailComponent implements OnInit {
         window.print();
     }
 
-    downloadQR() {
-        if (!this.qrCodeDataUrl) return;
-        
+    downloadQR(ticket: any) {
+        const tId = ticket._id || '';
+        const qrUrl = this.qrCodes[tId];
+
+        if (!qrUrl) return;
+
         const link = document.createElement('a');
-        link.href = this.qrCodeDataUrl;
-        link.download = `entrada-${this.ticket._id}.png`;
+        link.href = qrUrl;
+        link.download = `entrada-${tId}.png`;
         link.click();
     }
 }

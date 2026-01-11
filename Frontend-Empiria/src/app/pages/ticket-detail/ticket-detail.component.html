@@ -1,4 +1,4 @@
-<div class="ticket-page" *ngIf="!loading && ticket">
+<div class="ticket-page" *ngIf="!loading && tickets.length > 0">
 
     <!-- Premium Success Animation/Header -->
     <div class="success-header no-print">
@@ -13,7 +13,7 @@
 
     <div class="main-content">
         <!-- Ticket Card - Designed to look like a physical premium ticket -->
-        <div class="ticket-card">
+        <div class="ticket-card" *ngFor="let ticket of tickets">
             <!-- Left Side: Visuals & Main Info -->
             <div class="ticket-visual">
                 <div class="event-image" [style.background-image]="'url(' + ticket.event.imageUrl + ')'">
@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="qr-wrapper">
-                    <img [src]="qrCodeDataUrl" alt="QR de Entrada" class="qr-code" />
+                    <img [src]="qrCodes[ticket._id]" alt="QR de Entrada" class="qr-code" />
                 </div>
 
                 <div class="attendee-info">
@@ -63,6 +63,13 @@
                         ${{ ticket.amount }}
                     </div>
                 </div>
+
+                <!-- Individual Action (Mobile/Desktop) -->
+                <div class="ticket-actions-individual no-print">
+                    <button class="btn-icon-small" (click)="downloadQR(ticket)" title="Descargar QR">
+                        <span class="material-icons">download</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -70,11 +77,7 @@
         <div class="actions-panel no-print">
             <button class="btn btn-primary" (click)="printTicket()">
                 <span class="material-icons">print</span>
-                Imprimir Entrada
-            </button>
-            <button class="btn btn-outline" (click)="downloadQR()">
-                <span class="material-icons">download</span>
-                Descargar QR
+                Imprimir Entradas
             </button>
             <button class="btn btn-text" routerLink="/">
                 <span class="material-icons">arrow_back</span>

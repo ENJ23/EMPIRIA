@@ -476,3 +476,65 @@ tr:hover td {
         overflow-x: auto;
     }
 }
+
+/* Stock Info Styles */
+.stock-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stock-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stock-used {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #ff8c42);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.stock-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.stock-remaining {
+    font-size: 0.75rem;
+    color: rgba(255, 193, 7, 0.8);
+    font-weight: 500;
+}
+
+/* Badge Styles */
+.badge-free,
+.badge-general {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.badge-free {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.badge-general {
+    background: rgba(33, 150, 243, 0.2);
+    color: #2196f3;
+}
+
+/* Status Pill for Free Events */
+.status-pill.free {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4caf50;
+    border: 1px solid #4caf50;
+}

@@ -28,4 +28,14 @@ export class PaymentService {
             { headers: { 'x-token': token || '' } }
         );
     }
+
+    // NUEVO: Solicitar entradas gratuitas para eventos sin costo
+    requestFreeTickets(eventId: string, quantity: number): Observable<any> {
+        const token = this.authService.getToken();
+
+        return this.http.post(`${this.apiUrl}/request-free-tickets`,
+            { eventId, quantity },
+            { headers: { 'x-token': token || '' } }
+        );
+    }
 }

@@ -50,8 +50,15 @@ export class TicketService {
         return this.http.get(url);
     }
 
+    // New: Get ALL tickets for a payment
+    getTicketsByPaymentId(paymentId: string): Observable<any> {
+        const url = `${this.apiUrl}/by-payment-all/${paymentId}`;
+        console.log(`[TicketService] Calling: ${url}`);
+        return this.http.get(url);
+    }
+
     // Admin: list tickets with optional filters
-    listTickets(params: { eventId?: string; status?: string; page?: number; limit?: number }): Observable<{ tickets: TicketSummary[]; total: number; page: number; limit: number }>{
+    listTickets(params: { eventId?: string; status?: string; page?: number; limit?: number }): Observable<{ tickets: TicketSummary[]; total: number; page: number; limit: number }> {
         const token = this.authService.getToken();
         const httpParams: any = {};
         if (params.eventId) httpParams.eventId = params.eventId;
@@ -72,13 +79,13 @@ export class TicketService {
                 return {
                     tickets: (res.tickets || []).map((t: any) => ({
                         id: t._id,
-                        user: { 
-                            id: t.user?._id, 
+                        user: {
+                            id: t.user?._id,
                             name: t.user?.nombre ? `${t.user.nombre} ${t.user.apellido || ''}`.trim() : 'N/A',
                             email: t.user?.correo || 'N/A'
                         },
-                        event: { 
-                            id: t.event?._id, 
+                        event: {
+                            id: t.event?._id,
                             title: t.event?.title || 'N/A',
                             date: t.event?.date ? new Date(t.event.date) : new Date(),
                             location: t.event?.location || 'N/A'

@@ -25,9 +25,9 @@ const createPreference = async (req, res) => {
 
         // Validaciones
         if (!eventId || !quantity || quantity < 1) {
-            return res.status(400).json({ 
-                status: 0, 
-                msg: 'Parámetros inválidos: eventId y quantity son requeridos' 
+            return res.status(400).json({
+                status: 0,
+                msg: 'Parámetros inválidos: eventId y quantity son requeridos'
             });
         }
 
@@ -35,6 +35,22 @@ const createPreference = async (req, res) => {
         const event = await Event.findById(eventId);
         if (!event) {
             return res.status(404).json({ status: 0, msg: 'Evento no encontrado' });
+        }
+
+        // ✅ VALIDAR: Si el evento es GRATUITO, no permitir pago
+        if (event.isFree) {
+            return res.status(400).json({
+                status: 0,
+                msg: 'Este es un evento gratuito. Usa el endpoint de solicitud de entradas gratuitas en su lugar.'
+            });
+        }
+
+        // ✅ VALIDAR: Si onlyGeneralPrice es true, rechazar solicitudes VIP
+        if (event.onlyGeneralPrice && ticketType === 'vip') {
+            return res.status(400).json({
+                status: 0,
+                msg: 'Este evento solo ofrece entradas de precio general. VIP no está disponible.'
+            });
         }
 
         // Verificar capacidad del evento, considerando reservas activas
@@ -60,8 +76,8 @@ const createPreference = async (req, res) => {
         console.log(`[createPreference] Availability calc - Capacity: ${event.capacity}, Sold: ${ticketsSold}, Reserved: ${reservedCount}, Available: ${availableTickets}`);
 
         if (availableTickets <= 0) {
-            return res.status(400).json({ 
-                status: 0, 
+            return res.status(400).json({
+                status: 0,
                 msg: 'Entradas agotadas para este evento',
                 available: 0,
                 soldOut: true
@@ -70,8 +86,8 @@ const createPreference = async (req, res) => {
 
         // Verificar que la cantidad solicitada no exceda la disponibilidad
         if (quantity > availableTickets) {
-            return res.status(400).json({ 
-                status: 0, 
+            return res.status(400).json({
+                status: 0,
                 msg: `Solo hay ${availableTickets} entrada(s) disponible(s)`,
                 available: availableTickets,
                 requested: quantity
@@ -105,8 +121,8 @@ const createPreference = async (req, res) => {
         const finalAvailable = event.capacity - (event.ticketsSold || 0) - finalReservedCount;
 
         if (quantity > finalAvailable) {
-            return res.status(400).json({ 
-                status: 0, 
+            return res.status(400).json({
+                status: 0,
                 msg: `Solo hay ${finalAvailable} entrada(s) disponible(s)`,
                 available: Math.max(0, finalAvailable),
                 requested: quantity
@@ -273,12 +289,12 @@ const receiveWebhook = async (req, res) => {
 
         // Find or update the Payment record
         let paymentRecord = await Payment.findOne({ mp_payment_id: paymentId });
-        
+
         if (!paymentRecord) {
             console.log(`[webhook] Payment not found by mp_payment_id, searching by user and event...`);
             // Try to find by preference_id if not found by payment_id
-            const payments = await Payment.find({ 
-                user: userId, 
+            const payments = await Payment.find({
+                user: userId,
                 event: eventId,
                 status: 'pending'
             }).sort({ createdAt: -1 }).limit(1);
@@ -287,7 +303,7 @@ const receiveWebhook = async (req, res) => {
                 console.error('[webhook] Payment record not found for this user and event');
                 return res.sendStatus(200);
             }
-            
+
             paymentRecord = payments[0];
         }
 
@@ -313,7 +329,7 @@ const receiveWebhook = async (req, res) => {
         if (mpPaymentData.status === 'approved') {
             try {
                 const qty = Number(paymentRecord.quantity || 1);
-                
+
                 // Determine how many tickets already exist for this payment (idempotency)
                 const existingCount = await Ticket.countDocuments({ payment: paymentRecord._id });
                 const remainingToCreate = Math.max(0, qty - existingCount);
@@ -445,16 +461,18 @@ const getMyPayments = async (req, res) => {
                 ticketType: payment.ticketType || 'general',
                 mp_payment_id: payment.mp_payment_id,
                 status: payment.status, // 'pending', 'approved', 'rejected', 'cancelled'
+                amount: payment.amount,
+                transaction_amount: payment.transaction_amount,
                 createdAt: payment.createdAt,
                 updatedAt: payment.updatedAt,
-                
+
                 // Reservation info for QR re-access
                 isReserved: !!reservation,
                 reservationConfirmed: reservation?.confirmed || false,
                 reservedUntil: reservation?.reservedUntil || null,
                 isReservationActive: isActive,
                 timeRemainingMinutes: timeRemainingMinutes,
-                
+
                 // Mercado Pago link (only if still pending/in reservation window)
                 canAccessQR: isActive || payment.status === 'pending',
                 mp_init_point: payment.mp_init_point || null
@@ -478,8 +496,146 @@ const getMyPayments = async (req, res) => {
     }
 };
 
+/**
+ * Request free tickets for free events (no payment required)
+ * Creates tickets directly without Mercado Pago
+ */
+const requestFreeTickets = async (req, res) => {
+    try {
+        const { eventId, quantity } = req.body;
+        const userId = req.uid;
+
+        // Validations
+        if (!eventId || !quantity || quantity < 1) {
+            return res.status(400).json({
+                status: 0,
+                msg: 'Parámetros inválidos: eventId y quantity son requeridos'
+            });
+        }
+
+        // Verify event exists and is free
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({ status: 0, msg: 'Evento no encontrado' });
+        }
+
+        if (!event.isFree) {
+            return res.status(400).json({
+                status: 0,
+                msg: 'Este evento no es gratuito. Usa create-preference para eventos pagos.'
+            });
+        }
+
+        // Verify user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
+        }
+
+        // Check capacity and active reservations
+        const activeReservations = await Reservation.aggregate([
+            {
+                $match: {
+                    event: event._id,
+                    confirmed: false,
+                    reservedUntil: { $gt: new Date() }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalReserved: { $sum: '$quantity' }
+                }
+            }
+        ]);
+        const reservedCount = activeReservations.length > 0 ? activeReservations[0].totalReserved : 0;
+        const ticketsSold = event.ticketsSold || 0;
+        const availableTickets = event.capacity - ticketsSold - reservedCount;
+
+        if (availableTickets <= 0) {
+            return res.status(400).json({
+                status: 0,
+                msg: 'Entradas agotadas para este evento',
+                available: 0,
+                soldOut: true
+            });
+        }
+
+        if (quantity > availableTickets) {
+            return res.status(400).json({
+                status: 0,
+                msg: `Solo hay ${availableTickets} entrada(s) disponible(s)`,
+                available: availableTickets,
+                requested: quantity
+            });
+        }
+
+        // Create a Payment record for tracking (price = 0 for free events)
+        const payment = new Payment({
+            user: userId,
+            event: eventId,
+            amount: 0,
+            status: 'free_approved',
+            ticketType: 'general',
+            quantity: quantity,
+            mp_preference_id: 'FREE_EVENT_' + Date.now(),
+            mp_payment_id: null,
+            mp_init_point: null,
+            createdAt: new Date()
+        });
+        await payment.save();
+
+        // Create tickets directly
+        const ticketsToCreate = Array(quantity).fill(null).map(() => ({
+            user: userId,
+            event: eventId,
+            status: 'approved',
+            ticketType: 'general',
+            priceType: 'free',
+            seatNumber: null,
+            entryQr: null,
+            purchasedAt: new Date(),
+            payment: payment._id
+        }));
+
+        const createdTickets = await Ticket.insertMany(ticketsToCreate);
+
+        // Update event's ticketsSold
+        await Event.findByIdAndUpdate(
+            eventId,
+            { $inc: { ticketsSold: quantity } }
+        );
+
+        res.json({
+            status: 1,
+            msg: `Entradas gratuitas solicitadas con éxito. Total: ${quantity}`,
+            payment: {
+                id: payment._id,
+                status: 'free_approved',
+                quantity: quantity,
+                amount: 0
+            },
+            tickets: createdTickets.map(t => ({
+                id: t._id,
+                status: t.status,
+                ticketType: t.ticketType
+            }))
+        });
+
+    } catch (error) {
+        console.error('Error en requestFreeTickets:', error);
+        res.status(500).json({
+            status: 0,
+            msg: 'Error al solicitar entradas gratuitas',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createPreference,
     receiveWebhook,
-    getMyPayments
+    getMyPayments,
+    requestFreeTickets
 };
+

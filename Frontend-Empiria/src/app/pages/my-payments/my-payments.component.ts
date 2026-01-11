@@ -15,6 +15,8 @@ interface PaymentData {
     quantity: number;
     ticketType: string;
     mp_payment_id: string;
+    amount: number;
+    transaction_amount?: number;
     status: string; // 'pending', 'approved', 'rejected', 'cancelled'
     createdAt: string;
     updatedAt: string;

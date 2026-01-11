@@ -3,7 +3,7 @@ const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validate-fields');
 const { validarJWT } = require('../middlewares/validate-jwt');
 const { requireAdmin } = require('../middlewares/require-admin');
-const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketByIdPublic, listTickets, getMyTickets } = require('../controllers/ticketController');
+const { checkTicketStatus, checkTicketStatusByPaymentId, getTicketById, getTicketByPaymentId, getTicketsByPaymentId, getTicketByIdPublic, listTickets, getMyTickets } = require('../controllers/ticketController');
 
 const router = Router();
 
@@ -11,6 +11,7 @@ const router = Router();
 // These are more specific routes, so they go first
 router.get('/status', checkTicketStatusByPaymentId);
 router.get('/by-payment/:paymentId', getTicketByPaymentId);
+router.get('/by-payment-all/:paymentId', getTicketsByPaymentId);
 router.get('/public/:id', getTicketByIdPublic);
 
 // Legacy back-compat: /status/:eventId without JWT if paymentId is in query
