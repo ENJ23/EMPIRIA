@@ -1,4 +1,7 @@
 // src/jobs/eventReminderJob.js
+// TEMPORALMENTE DESHABILITADO: node-cron con timezone causa error en Vercel
+// Se habilitará después de configurar las variables de entorno correctamente
+
 const cron = require('node-cron');
 const Ticket = require('../models/Ticket');
 const Event = require('../models/Event');
@@ -12,7 +15,7 @@ const emailService = require('../services/emailService');
  * 
  * Cron: '0 9 * * *' = Cada día a las 9:00 AM
  */
-const eventReminderJob = cron.schedule('0 9 * * *', async () => {
+const eventReminderJobHandler = async () => {
     console.log('\n🔔 ========== INICIANDO JOB DE RECORDATORIOS ==========');
     console.log(`⏰ ${new Date().toLocaleString('es-AR')}\n`);
     
@@ -100,8 +103,7 @@ const eventReminderJob = cron.schedule('0 9 * * *', async () => {
     } catch (error) {
         console.error('❌ Error en eventReminderJob:', error);
     }
-}, {
-    timezone: "America/Argentina/Jujuy"
-});
+};
 
-module.exports = eventReminderJob;
+// No inicializar automáticamente - solo exportar la función
+module.exports = { eventReminderJobHandler };

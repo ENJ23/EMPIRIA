@@ -1,4 +1,7 @@
 // src/jobs/promotionalEmailJob.js
+// TEMPORALMENTE DESHABILITADO: node-cron con timezone causa error en Vercel
+// Se habilitará después de configurar las variables de entorno correctamente
+
 const cron = require('node-cron');
 const Promotion = require('../models/Promotion');
 const User = require('../models/User');
@@ -11,7 +14,7 @@ const emailService = require('../services/emailService');
  * 
  * Cron: '0 10 * * *' = Cada día a las 10:00 AM
  */
-const promotionalEmailJob = cron.schedule('0 10 * * *', async () => {
+const promotionalEmailJobHandler = async () => {
     console.log('\n📢 ========== INICIANDO JOB DE PROMOCIONES ==========');
     console.log(`⏰ ${new Date().toLocaleString('es-AR')}\n`);
     
@@ -97,8 +100,7 @@ const promotionalEmailJob = cron.schedule('0 10 * * *', async () => {
     } catch (error) {
         console.error('❌ Error en promotionalEmailJob:', error);
     }
-}, {
-    timezone: "America/Argentina/Jujuy"
-});
+};
 
-module.exports = promotionalEmailJob;
+// No inicializar automáticamente - solo exportar la función
+module.exports = { promotionalEmailJobHandler };
