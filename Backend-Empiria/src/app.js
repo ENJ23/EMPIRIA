@@ -40,8 +40,13 @@ const corsOptions = {
 // Aplicar CORS a TODAS las rutas
 app.use(cors(corsOptions));
 
-// Manejo explícito de preflight OPTIONS
-app.options('*', cors(corsOptions));
+// Manejo explícito de preflight OPTIONS sin patrones especiales (evita path-to-regexp en Express v5)
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 // ========== Express Body Parser ==========
 app.use(express.json({ limit: '50mb' }));
