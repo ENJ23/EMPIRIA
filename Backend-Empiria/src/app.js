@@ -35,7 +35,9 @@ app.use(cors({
 
 // Security headers
 if (helmet) {
-    app.use(helmet());
+    app.use(helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" }
+    }));
 }
 
 // Basic rate limit for webhooks and auth
@@ -44,6 +46,9 @@ if (rateLimit) {
     app.use('/api/', limiter);
 }
 app.use(express.json());
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
