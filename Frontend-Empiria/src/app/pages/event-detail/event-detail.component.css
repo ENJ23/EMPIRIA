@@ -88,9 +88,8 @@
     align-items: center;
     gap: var(--spacing-sm);
     background: var(--bg-card);
-    padding: var(--spacing-so);
-    border-radius: var(--radius-md);
     padding: 20px;
+    border-radius: var(--radius-md);
 }
 
 .organizer-avatar {
@@ -260,17 +259,9 @@
 }
 
 @keyframes pulse-gold {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
 }
 
 /* Quantity Selector */
@@ -318,15 +309,11 @@
     color: white;
     font-weight: 600;
     font-size: 1rem;
-    -moz-appearance: textfield;
-    /* Firefox */
     appearance: textfield;
 }
-
-/* Chrome, Safari, Edge, Opera */
 .qty-input::-webkit-outer-spin-button,
 .qty-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
+    appearance: none;
     margin: 0;
 }
 
@@ -408,15 +395,8 @@
 }
 
 @keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.6;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 /* Modal Styles */
@@ -673,11 +653,6 @@
 }
 
 @keyframes gradient-slide {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    100% {
-        background-position: 100% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
 }
