@@ -103,63 +103,94 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     }
 
     purchase() {
-        if (!this.selectedTicket || !this.eventId) return;
+        if (!this.eventId) return;
 
         this.isProcessing = true;
         const quantity = Math.max(1, Math.min(this.selectedQuantity || 1, this.availableTickets || 1));
-        const ticketType = this.selectedTicket; // Send the selected ticket type
 
-        this.paymentService.createPreference(this.eventId, quantity, ticketType).subscribe({
-            next: (res: any) => {
-                // Clear any prior errors on success
-                this.purchaseErrorMsg = null;
-                this.purchaseErrorDetails = {};
-                this.paymentUrl = res.init_point;
-                this.paymentDbId = res.payment_id || null;
-                // Generate QR, then force update inside Zone
-                QRCode.toDataURL(this.paymentUrl)
-                    .then(url => {
+        // ✅ NUEVO: Detectar si es evento gratuito
+        this.event$.subscribe((event: any) => {
+            if (event?.isFree) {
+                // Solicitar entradas gratuitas sin pago
+                this.paymentService.requestFreeTickets(this.eventId!, quantity).subscribe({
+                    next: (res: any) => {
+                        this.purchaseErrorMsg = null;
+                        this.purchaseErrorDetails = {};
+                        // Mostrar mensaje de éxito
+                        alert(`✅ Entradas solicitadas exitosamente! Puedes verlas en "Mis Entradas"`);
+                        this.isProcessing = false;
+                        this.selectedTicket = null;
+                        this.selectedQuantity = 1;
+                        this.cdr.detectChanges();
+                    },
+                    error: (err) => {
+                        console.error('Error al solicitar entradas gratuitas:', err);
+                        const serverError = err?.error;
+                        let msg = 'No se pudo solicitar las entradas.';
+                        if (serverError?.msg) {
+                            msg = serverError.msg;
+                        }
+                        this.purchaseErrorMsg = msg;
+                        this.isProcessing = false;
+                        this.cdr.detectChanges();
+                    }
+                });
+            } else {
+                // Flujo normal de pago
+                const ticketType = this.selectedTicket || 'general';
+                this.paymentService.createPreference(this.eventId!, quantity, ticketType).subscribe({
+                    next: (res: any) => {
+                        // Clear any prior errors on success
+                        this.purchaseErrorMsg = null;
+                        this.purchaseErrorDetails = {};
+                        this.paymentUrl = res.init_point;
+                        this.paymentDbId = res.payment_id || null;
+                        // Generate QR, then force update inside Zone
+                        QRCode.toDataURL(this.paymentUrl)
+                            .then(url => {
+                                this.ngZone.run(() => {
+                                    this.qrCodeUrl = url;
+                                    this.showPaymentModal = true;
+                                    this.isProcessing = false;
+                                    // Prefer polling by Payment ID (does not require JWT)
+                                    if (this.paymentDbId) {
+                                        this.startPollingByPayment(this.paymentDbId);
+                                    } else if (this.eventId) {
+                                        // Fallback to legacy polling by event (requires JWT)
+                                        this.startPolling(this.eventId);
+                                    }
+                                    this.cdr.detectChanges();
+                                });
+                            })
+                            .catch(err => {
+                                this.ngZone.run(() => {
+                                    console.error('Error generando QR', err);
+                                    this.isProcessing = false;
+                                    this.cdr.detectChanges();
+                                });
+                            });
+                    },
+                    error: (err) => {
+                        console.error('Error al iniciar el pago:', err);
+                        // Parse backend-provided error details for a friendly UI message
+                        const serverError = err?.error;
+                        let msg = 'No se pudo iniciar el pago.';
+                        const details: { available?: number; requested?: number; soldOut?: boolean } = {};
+                        if (serverError && typeof serverError === 'object') {
+                            if (serverError.msg) msg = serverError.msg;
+                            if (typeof serverError.available === 'number') details.available = serverError.available;
+                            if (typeof serverError.requested === 'number') details.requested = serverError.requested;
+                            if (typeof serverError.soldOut === 'boolean') details.soldOut = serverError.soldOut;
+                        } else if (typeof serverError === 'string') {
+                            msg = serverError;
+                        }
+                        this.purchaseErrorMsg = msg;
+                        this.purchaseErrorDetails = details;
                         this.ngZone.run(() => {
-                            this.qrCodeUrl = url;
-                            this.showPaymentModal = true;
                             this.isProcessing = false;
-                            // Prefer polling by Payment ID (does not require JWT)
-                            if (this.paymentDbId) {
-                                this.startPollingByPayment(this.paymentDbId);
-                            } else if (this.eventId) {
-                                // Fallback to legacy polling by event (requires JWT)
-                                this.startPolling(this.eventId);
-                            }
                             this.cdr.detectChanges();
                         });
-                    })
-                    .catch(err => {
-                        this.ngZone.run(() => {
-                            console.error('Error generando QR', err);
-                            this.isProcessing = false;
-                            this.cdr.detectChanges();
-                        });
-                    });
-            },
-            error: (err) => {
-                console.error('Error al iniciar el pago:', err);
-                // Parse backend-provided error details for a friendly UI message
-                const serverError = err?.error;
-                let msg = 'No se pudo iniciar el pago.';
-                const details: { available?: number; requested?: number; soldOut?: boolean } = {};
-                if (serverError && typeof serverError === 'object') {
-                    if (serverError.msg) msg = serverError.msg;
-                    if (typeof serverError.available === 'number') details.available = serverError.available;
-                    if (typeof serverError.requested === 'number') details.requested = serverError.requested;
-                    if (typeof serverError.soldOut === 'boolean') details.soldOut = serverError.soldOut;
-                } else if (typeof serverError === 'string') {
-                    msg = serverError;
-                }
-                this.purchaseErrorMsg = msg;
-                this.purchaseErrorDetails = details;
-                this.ngZone.run(() => {
-                    this.isProcessing = false;
-                    this.cdr.detectChanges();
+                    }
                 });
             }
         });

@@ -70,7 +70,7 @@
 
                 <div class="form-section">
                     <h4>Configuración de Entradas</h4>
-                    <div class="form-grid">
+                    <div class="form-grid" *ngIf="!form.isFree">
                         <div class="form-group">
                             <label>Precio Mínimo ($)</label>
                             <div class="input-wrapper">
@@ -94,6 +94,21 @@
                                 <input type="number" [(ngModel)]="form.capacity" name="capacity"
                                     placeholder="Ej: 500" />
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" *ngIf="form.isFree">
+                        <div class="form-group span-2">
+                            <label>Capacidad Total</label>
+                            <div class="input-wrapper">
+                                <span class="material-icons">groups</span>
+                                <input type="number" [(ngModel)]="form.capacity" name="capacity"
+                                    placeholder="Ej: 500" />
+                            </div>
+                        </div>
+                        <div class="form-info-text">
+                            <span class="material-icons">info</span>
+                            <p>Este es un evento gratuito. Los precios no son necesarios.</p>
                         </div>
                     </div>
                 </div>
@@ -126,7 +141,7 @@
                 <div class="form-section highlight-section">
                     <h4>Tipo de Evento</h4>
                     <div class="checkbox-wrapper">
-                        <input type="checkbox" id="isFreeCheck" [(ngModel)]="form.isFree" name="isFree" />
+                        <input type="checkbox" id="isFreeCheck" [(ngModel)]="form.isFree" name="isFree" (change)="toggleFreeEvent()" />
                         <label for="isFreeCheck">
                             <span class="material-icons">card_giftcard</span>
                             Evento Gratuito (sin necesidad de pagar, solo solicitar entrada)

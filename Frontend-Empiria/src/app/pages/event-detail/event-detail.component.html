@@ -43,7 +43,7 @@
 
         <aside class="sidebar">
             <div class="ticket-card">
-                <h3>Adquirir Entradas</h3>
+                <h3>{{ event.isFree ? 'Solicitar Entrada' : 'Adquirir Entradas' }}</h3>
 
                 <!-- Availability Status -->
                 <div class="availability-status" [class.sold-out]="isSoldOut">
@@ -59,46 +59,24 @@
                     </div>
                 </div>
 
-                <div class="ticket-type" [class.selected]="selectedTicket === 'general'" [class.disabled]="isSoldOut"
-                    (click)="selectTicket('general', (event.isPreventa && event.preventaPrice) ? event.preventaPrice : event.priceRange.min)">
-                    <div class="ticket-info">
-                        <div class="ticket-name-row">
-                            <span class="ticket-name">General</span>
-                            <span class="badge-preventa-small" *ngIf="event.isPreventa">
-                                OFERTA
-                            </span>
+                <!-- ✅ NUEVO: UI para eventos gratuitos -->
+                <div *ngIf="event.isFree" class="free-event-card">
+                    <div class="free-header">
+                        <div class="free-event-badge">
+                            <span class="material-icons">stars</span>
+                            ACCESO LIBRE
                         </div>
-                        <span class="ticket-stock">Disponibles</span>
                     </div>
-                    <div class="price-column">
-                        <span class="old-price"
-                            *ngIf="event.isPreventa && event.preventaPrice && event.preventaPrice < event.priceRange.min">
-                            ${{ event.priceRange.min }}
-                        </span>
-                        <span class="ticket-price" [class.highlight-price]="event.isPreventa">
-                            ${{ (event.isPreventa && event.preventaPrice) ? event.preventaPrice : event.priceRange.min
-                            }}
-                        </span>
-                    </div>
-                </div>
 
-                <div class="ticket-type" [class.selected]="selectedTicket === 'vip'" [class.disabled]="isSoldOut"
-                    (click)="selectTicket('vip', event.priceRange.max)">
-                    <div class="ticket-info">
-                        <span class="ticket-name">VIP Experience</span>
-                        <span class="ticket-stock">Últimos lugares</span>
-                    </div>
-                    <span class="ticket-price">${{ event.priceRange.max }}</span>
-                </div>
+                    <h4 class="free-title">¡Estás invitado!</h4>
+                    <p class="free-event-description">Este evento es gratuito por cortesía de <strong>Empiria
+                            Jujuy</strong>. Reserva tu lugar ahora.</p>
 
-                <div class="summary" *ngIf="selectedTicket">
-                    <div class="summary-row">
-                        <span>Entrada {{ selectedTicket | titlecase }}</span>
-                        <span>${{ currentPrice }}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Cantidad</span>
-                        <div class="quantity-selector">
+                    <div class="quantity-section compact">
+                        <div class="quantity-label">
+                            <span class="material-icons">people</span> Cantidad
+                        </div>
+                        <div class="quantity-selector dark-glass">
                             <button class="qty-btn" (click)="decrementQuantity()" [disabled]="selectedQuantity <= 1">
                                 <span class="material-icons">remove</span>
                             </button>
@@ -110,39 +88,126 @@
                                 <span class="material-icons">add</span>
                             </button>
                         </div>
-                        <div class="qty-hint" *ngIf="!isSoldOut && availableTickets > 0 && selectedQuantity >= availableTickets">
-                            Máximo permitido: {{ availableTickets }} {{ availableTickets === 1 ? 'entrada' : 'entradas' }}.
+                    </div>
+
+                    <div class="qty-hint-small"
+                        *ngIf="!isSoldOut && availableTickets > 0 && selectedQuantity >= availableTickets">
+                        Máx. {{ availableTickets }} personas
+                    </div>
+
+                    <!-- Inline error alert for capacity/availability issues -->
+                    <div class="alert error" *ngIf="purchaseErrorMsg">
+                        <span class="material-icons">error</span>
+                        <div class="alert-content">
+                            <strong>{{ purchaseErrorMsg }}</strong>
+                            <div class="alert-sub" *ngIf="purchaseErrorDetails.soldOut">
+                                No hay más cupos disponibles.
+                            </div>
                         </div>
                     </div>
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span>${{ currentPrice * selectedQuantity }}</span>
-                    </div>
+
+                    <button class="btn btn-free-glow" [disabled]="isSoldOut || isProcessing" (click)="purchase()">
+                        <span class="material-icons" *ngIf="!isProcessing && !isSoldOut">confirmation_number</span>
+                        {{ isSoldOut ? 'Cupos Agotados' : isProcessing ? 'Solicitando...' : 'Reservar Mi Lugar' }}
+                    </button>
+
+                    <p class="free-note">
+                        <span class="material-icons">check_circle</span> Confirmación inmediata
+                    </p>
                 </div>
 
-                <!-- Inline error alert for capacity/availability issues -->
-                <div class="alert error" *ngIf="purchaseErrorMsg">
-                    <span class="material-icons">error</span>
-                    <div class="alert-content">
-                        <strong>{{ purchaseErrorMsg }}</strong>
-                        <div class="alert-sub"
-                            *ngIf="purchaseErrorDetails.available !== undefined && !purchaseErrorDetails.soldOut">
-                            Quedan {{ purchaseErrorDetails.available }}
-                            {{ purchaseErrorDetails.available === 1 ? 'entrada' : 'entradas' }} disponibles.
+                <!-- ✅ ORIGINAL: UI para eventos pagos -->
+                <div *ngIf="!event.isFree">
+                    <div class="ticket-type" [class.selected]="selectedTicket === 'general'"
+                        [class.disabled]="isSoldOut"
+                        (click)="selectTicket('general', (event.isPreventa && event.preventaPrice) ? event.preventaPrice : event.priceRange.min)">
+                        <div class="ticket-info">
+                            <div class="ticket-name-row">
+                                <span class="ticket-name">General</span>
+                                <span class="badge-preventa-small" *ngIf="event.isPreventa">
+                                    OFERTA
+                                </span>
+                            </div>
+                            <span class="ticket-stock">Disponibles</span>
                         </div>
-                        <div class="alert-sub" *ngIf="purchaseErrorDetails.soldOut">
-                            No hay más entradas disponibles para este evento.
+                        <div class="price-column">
+                            <span class="old-price"
+                                *ngIf="event.isPreventa && event.preventaPrice && event.preventaPrice < event.priceRange.min">
+                                ${{ event.priceRange.min }}
+                            </span>
+                            <span class="ticket-price" [class.highlight-price]="event.isPreventa">
+                                ${{ (event.isPreventa && event.preventaPrice) ? event.preventaPrice :
+                                event.priceRange.min
+                                }}
+                            </span>
                         </div>
                     </div>
-                </div>
 
-                <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing || isSoldOut"
-                    (click)="purchase()">
-                    {{ isSoldOut ? 'Entradas Agotadas' : isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
-                </button>
-                <p class="secure-note">
-                    <span class="material-icons">lock</span> Pago 100% Seguro
-                </p>
+                    <div class="ticket-type" *ngIf="!event.onlyGeneralPrice" [class.selected]="selectedTicket === 'vip'"
+                        [class.disabled]="isSoldOut" (click)="selectTicket('vip', event.priceRange.max)">
+                        <div class="ticket-info">
+                            <span class="ticket-name">VIP Experience</span>
+                            <span class="ticket-stock">Últimos lugares</span>
+                        </div>
+                        <span class="ticket-price">${{ event.priceRange.max }}</span>
+                    </div>
+
+                    <div class="summary" *ngIf="selectedTicket">
+                        <div class="summary-row">
+                            <span>Entrada {{ selectedTicket | titlecase }}</span>
+                            <span>${{ currentPrice }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Cantidad</span>
+                            <div class="quantity-selector">
+                                <button class="qty-btn" (click)="decrementQuantity()"
+                                    [disabled]="selectedQuantity <= 1">
+                                    <span class="material-icons">remove</span>
+                                </button>
+                                <input type="number" min="1" [max]="availableTickets" [disabled]="isSoldOut"
+                                    [value]="selectedQuantity" (input)="setQuantity($any($event.target).valueAsNumber)"
+                                    class="qty-input" />
+                                <button class="qty-btn" (click)="incrementQuantity()"
+                                    [disabled]="selectedQuantity >= availableTickets || isSoldOut">
+                                    <span class="material-icons">add</span>
+                                </button>
+                            </div>
+                            <div class="qty-hint"
+                                *ngIf="!isSoldOut && availableTickets > 0 && selectedQuantity >= availableTickets">
+                                Máximo permitido: {{ availableTickets }} {{ availableTickets === 1 ? 'entrada' :
+                                'entradas' }}.
+                            </div>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span>${{ currentPrice * selectedQuantity }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Inline error alert for capacity/availability issues -->
+                    <div class="alert error" *ngIf="purchaseErrorMsg">
+                        <span class="material-icons">error</span>
+                        <div class="alert-content">
+                            <strong>{{ purchaseErrorMsg }}</strong>
+                            <div class="alert-sub"
+                                *ngIf="purchaseErrorDetails.available !== undefined && !purchaseErrorDetails.soldOut">
+                                Quedan {{ purchaseErrorDetails.available }}
+                                {{ purchaseErrorDetails.available === 1 ? 'entrada' : 'entradas' }} disponibles.
+                            </div>
+                            <div class="alert-sub" *ngIf="purchaseErrorDetails.soldOut">
+                                No hay más entradas disponibles para este evento.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-block" [disabled]="!selectedTicket || isProcessing || isSoldOut"
+                        (click)="purchase()">
+                        {{ isSoldOut ? 'Entradas Agotadas' : isProcessing ? 'Procesando...' : 'Confirmar Compra' }}
+                    </button>
+                    <p class="secure-note">
+                        <span class="material-icons">lock</span> Pago 100% Seguro
+                    </p>
+                </div>
             </div>
         </aside>
     </div>

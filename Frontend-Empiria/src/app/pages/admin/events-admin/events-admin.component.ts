@@ -116,4 +116,18 @@ export class EventsAdminComponent implements OnInit {
             }
         });
     }
+
+    // ✅ NUEVO: Manejar cambio en el checkbox de evento gratuito
+    toggleFreeEvent() {
+        if (this.form.isFree) {
+            // Si se marca como gratuito, resetear precios
+            this.form.priceRange.min = 0;
+            this.form.priceRange.max = 0;
+            this.form.isPreventa = false;
+            this.form.preventaPrice = undefined;
+            this.form.preventaLimit = undefined;
+        }
+        this.cdr.detectChanges();
+    }
 }
+

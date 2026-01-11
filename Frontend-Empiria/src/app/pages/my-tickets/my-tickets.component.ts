@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TicketService } from '../../core/services/ticket.service';
 import { Observable } from 'rxjs';
@@ -31,6 +32,7 @@ export class MyTicketsComponent implements OnInit {
     error: string | null = null;
 
     private cdr = inject(ChangeDetectorRef);
+    private router = inject(Router); // Inject router
 
     constructor(private ticketService: TicketService) { }
 
@@ -75,9 +77,9 @@ export class MyTicketsComponent implements OnInit {
     }
 
     viewQR(ticket: TicketData) {
-        // Open QR in a modal or new window
-        if (ticket.entryQr) {
-            window.open(ticket.entryQr, '_blank');
+        // Navigate to ticket detail page
+        if (ticket.id) {
+            this.router.navigate(['/tickets', ticket.id]);
         }
     }
 

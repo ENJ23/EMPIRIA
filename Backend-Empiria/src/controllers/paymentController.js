@@ -578,8 +578,9 @@ const requestFreeTickets = async (req, res) => {
             status: 'free_approved',
             ticketType: 'general',
             quantity: quantity,
-            mp_preference_id: 'FREE_EVENT_' + Date.now(),
-            mp_payment_id: null,
+            mp_preference_id: 'FREE_PREF_' + userId + '_' + eventId + '_' + Date.now(),
+            mp_payment_id: 'FREE_PAY_' + userId + '_' + eventId + '_' + Date.now(),
+            external_reference: 'FREE_' + userId + '_' + eventId + '_' + Date.now(),
             mp_init_point: null,
             createdAt: new Date()
         });
@@ -589,16 +590,37 @@ const requestFreeTickets = async (req, res) => {
         const ticketsToCreate = Array(quantity).fill(null).map(() => ({
             user: userId,
             event: eventId,
+            payment: payment._id,
             status: 'approved',
-            ticketType: 'general',
-            priceType: 'free',
-            seatNumber: null,
-            entryQr: null,
-            purchasedAt: new Date(),
-            payment: payment._id
+            amount: 0,
+            purchasedAt: new Date()
         }));
 
         const createdTickets = await Ticket.insertMany(ticketsToCreate);
+
+        // Generate QR codes for each created ticket
+        const qrPromises = createdTickets.map(async (ticket) => {
+            try {
+                const qrData = JSON.stringify({
+                    ticketId: ticket._id.toString(),
+                    eventId: ticket.event.toString(),
+                    userId: ticket.user.toString(),
+                    timestamp: ticket.purchasedAt.getTime()
+                });
+                const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+                    errorCorrectionLevel: 'H',
+                    type: 'image/png',
+                    width: 300,
+                    margin: 2
+                });
+                ticket.entryQr = qrCodeDataURL;
+                await ticket.save();
+                console.log(`✅ QR generado para entrada: ${ticket._id}`);
+            } catch (qrError) {
+                console.error(`❌ Error generando QR para entrada ${ticket._id}:`, qrError.message);
+            }
+        });
+        await Promise.all(qrPromises);
 
         // Update event's ticketsSold
         await Event.findByIdAndUpdate(
