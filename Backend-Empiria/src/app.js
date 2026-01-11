@@ -13,8 +13,7 @@ const promotionalEmailJob = require('./jobs/promotionalEmailJob');
 
 const app = express();
 
-// Middleware
-// CORS: restrict to known origins
+// ========== CORS PRIMERO (antes que cualquier otro middleware) ==========
 const defaultOrigins = [
     'http://localhost:4200',
     'https://empiriajujuy.vercel.app',
@@ -22,33 +21,47 @@ const defaultOrigins = [
 ].filter(Boolean);
 const allowedOrigins = (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : defaultOrigins);
 
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error('Not allowed by CORS'));
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
     },
     credentials: true,
+    optionsSuccessStatus: 200,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-token'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+};
 
-// Security headers
+// Aplicar CORS a TODAS las rutas
+app.use(cors(corsOptions));
+
+// Manejo explícito de preflight OPTIONS
+app.options('*', cors(corsOptions));
+
+// ========== Express Body Parser ==========
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// ========== Security headers ==========
 if (helmet) {
     app.use(helmet({
-        crossOriginResourcePolicy: { policy: "cross-origin" }
+        crossOriginResourcePolicy: false,
+        contentSecurityPolicy: false
     }));
 }
 
-// Basic rate limit for webhooks and auth
+// ========== Rate Limit (DESPUÉS de CORS) ==========
 if (rateLimit) {
-    const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
+    const limiter = rateLimit({
+        windowMs: 60 * 1000,
+        max: 200,
+        skip: (req) => req.method === 'OPTIONS' // No limitar OPTIONS
+    });
     app.use('/api/', limiter);
 }
-app.use(express.json());
-
-// Handle preflight requests
-app.options('*', cors());
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/empiria')
