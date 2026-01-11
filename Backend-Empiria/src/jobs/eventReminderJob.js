@@ -101,7 +101,7 @@ const eventReminderJob = cron.schedule('0 9 * * *', async () => {
         console.error('❌ Error en eventReminderJob:', error);
     }
 }, {
-    timezone: process.env.TZ || "America/Argentina/Jujuy"
+    timezone: "America/Argentina/Jujuy"
 });
 
 module.exports = eventReminderJob;

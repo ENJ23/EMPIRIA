@@ -98,7 +98,7 @@ const promotionalEmailJob = cron.schedule('0 10 * * *', async () => {
         console.error('❌ Error en promotionalEmailJob:', error);
     }
 }, {
-    timezone: process.env.TZ || "America/Argentina/Jujuy"
+    timezone: "America/Argentina/Jujuy"
 });
 
 module.exports = promotionalEmailJob;
