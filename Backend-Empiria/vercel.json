@@ -1,9 +1,6 @@
 {
     "version": 2,
     "buildCommand": "npm run build",
-    "env": {
-        "FRONTEND_URL": "@frontend_url"
-    },
     "rewrites": [
         {
             "source": "/api/(.*)",
