@@ -60,14 +60,14 @@
                         <span class="material-icons">verified</span> VÁLIDA
                     </div>
                     <div class="price-tag">
-                        ${{ ticket.amount }}
+                        {{ ticket.amount > 0 ? '$' + ticket.amount : 'GRATUITO' }}
                     </div>
                 </div>
 
                 <!-- Individual Action (Mobile/Desktop) -->
                 <div class="ticket-actions-individual no-print">
-                    <button class="btn-icon-small" (click)="downloadQR(ticket)" title="Descargar QR">
-                        <span class="material-icons">download</span>
+                    <button class="btn-download-ticket" (click)="downloadQR(ticket)">
+                        <span class="material-icons">download</span> Descargar Entrada
                     </button>
                 </div>
             </div>

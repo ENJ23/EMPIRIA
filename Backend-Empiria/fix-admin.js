@@ -1,5 +1,6 @@
 const http = require('http');
 
+// Paso 1: Crear admin2
 const data = JSON.stringify({
     correo: 'admin2@empiria.com',
     contraseña: 'Admin123'
@@ -27,7 +28,7 @@ const req = http.request(options, (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
             console.log('\n✅ Admin user created successfully!');
             console.log('-----------------------------------');
-            console.log('Email:    admin@empiria.com');
+            console.log('Email:    admin2@empiria.com');
             console.log('Password: Admin123');
             console.log('-----------------------------------');
         } else {

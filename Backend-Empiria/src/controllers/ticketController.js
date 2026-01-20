@@ -292,7 +292,7 @@ const getMyTickets = async (req, res) => {
         console.log('[getMyTickets] Fetching tickets for user:', userId, 'query:', JSON.stringify(userQuery));
 
         const tickets = await Ticket.find(userQuery)
-            .populate('event', 'title date location capacity')
+            .populate('event', 'title date location capacity imageUrl')
             .populate('payment', 'status mp_payment_id')
             .sort({ purchasedAt: -1 });
 

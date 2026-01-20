@@ -1,15 +1,18 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TicketService } from '../../core/services/ticket.service';
 import { Observable } from 'rxjs';
 
 interface TicketData {
     id: string;
     event: {
+        _id: string;
         title: string;
         date: string;
         location: string;
+        imageUrl?: string;
     };
     status: string;
     amount: number;
@@ -21,7 +24,7 @@ interface TicketData {
 @Component({
     selector: 'app-my-tickets',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule], // Added FormsModule
     templateUrl: './my-tickets.component.html',
     styleUrl: './my-tickets.component.css'
 })
@@ -29,12 +32,23 @@ export class MyTicketsComponent implements OnInit {
     tickets$!: Observable<any>;
     tickets: TicketData[] = [];
     loading = true;
-    error: string | null = null;
+    error = '';
 
-    private cdr = inject(ChangeDetectorRef);
-    private router = inject(Router); // Inject router
+    // Pagination & Filtering
+    filteredTickets: TicketData[] = [];
+    displayedTickets: TicketData[] = [];
+    uniqueEvents: any[] = [];
+    selectedEventId: string = 'all';
 
-    constructor(private ticketService: TicketService) { }
+    currentPage = 1;
+    pageSize = 5;
+    totalPages = 1;
+
+    constructor(
+        private ticketService: TicketService,
+        private router: Router,
+        private cdr: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
         this.loadMyTickets();
@@ -42,28 +56,37 @@ export class MyTicketsComponent implements OnInit {
 
     loadMyTickets() {
         this.loading = true;
-        this.error = null;
-        this.cdr.detectChanges(); // Force check before load
+        this.error = '';
 
         this.ticketService.getMyTickets().subscribe({
-            next: (response: any) => {
-                console.log('Mis Entradas:', response.data);
-                this.tickets = response.data || [];
+            next: (res: any) => {
+                this.tickets = res.data || [];
+
+                // Extract unique events for filter
+                const eventsMap = new Map();
+                this.tickets.forEach(ticket => {
+                    if (ticket.event && !eventsMap.has(ticket.event._id)) {
+                        eventsMap.set(ticket.event._id, ticket.event);
+                    }
+                });
+                this.uniqueEvents = Array.from(eventsMap.values());
+
+                // Initialize view
+                this.filterTickets();
                 this.loading = false;
-                this.cdr.detectChanges(); // Force check after load
+                this.cdr.markForCheck(); // Use markForCheck instead of detectChanges for safety
             },
             error: (err) => {
                 console.error('Error loading tickets:', err);
                 this.error = err.error?.msg || 'Error al cargar las entradas';
                 this.loading = false;
-                this.cdr.detectChanges(); // Force check on error
+                this.cdr.markForCheck();
             }
         });
     }
 
-    downloadQR(ticket: TicketData) {
+    downloadQR(ticket: any) {
         if (!ticket.entryQr) {
-            alert('Código QR no disponible');
             return;
         }
 
@@ -76,10 +99,35 @@ export class MyTicketsComponent implements OnInit {
         document.body.removeChild(link);
     }
 
-    viewQR(ticket: TicketData) {
-        // Navigate to ticket detail page
-        if (ticket.id) {
-            this.router.navigate(['/tickets', ticket.id]);
+    viewQR(ticket: any) {
+        // Redirigir al detalle de la entrada
+        this.router.navigate(['/tickets', ticket.id]);
+    }
+
+    filterTickets() {
+        if (this.selectedEventId === 'all') {
+            this.filteredTickets = [...this.tickets];
+        } else {
+            this.filteredTickets = this.tickets.filter(t => t.event && t.event._id === this.selectedEventId);
+        }
+        this.currentPage = 1;
+        this.updatePagination();
+    }
+
+    updatePagination() {
+        this.totalPages = Math.ceil(this.filteredTickets.length / this.pageSize);
+
+        const startIndex = (this.currentPage - 1) * this.pageSize;
+        const endIndex = startIndex + this.pageSize;
+
+        this.displayedTickets = this.filteredTickets.slice(startIndex, endIndex);
+    }
+
+    changePage(page: number) {
+        if (page >= 1 && page <= this.totalPages) {
+            this.currentPage = page;
+            this.updatePagination();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 

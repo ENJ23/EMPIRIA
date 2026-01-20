@@ -189,6 +189,44 @@ class EmailService {
     }
 
     /**
+     * Enviar confirmación de entradas gratuitas
+     * @param {object} user - Documento User
+     * @param {object} event - Documento Event
+     * @param {number} quantity - Cantidad de entradas
+     * @param {array} tickets - Array de tickets creados
+     */
+    async sendFreeTicketConfirmation(user, event, quantity, tickets) {
+        const eventDate = new Date(event.date);
+        const templateData = {
+            nombre: user.nombre,
+            titulo: event.title,
+            cantidad: quantity,
+            fecha: eventDate.toLocaleDateString('es-AR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            }),
+            hora: eventDate.toLocaleTimeString('es-AR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }),
+            ubicacion: event.location,
+            descripcion: event.description.substring(0, 200) + '...',
+            enlaceTickets: `${process.env.FRONTEND_URL}/my-tickets`,
+            enlaceEvento: `${process.env.FRONTEND_URL}/events/${event._id}`,
+            ticketIds: tickets.map(t => t._id.toString()).join(', ')
+        };
+
+        return this.sendEmail(
+            user.correo,
+            `✅ Confirmación: Entradas para "${event.title}"`,
+            'freeTicketConfirmation',
+            templateData
+        );
+    }
+
+    /**
      * Obtener logs de emails
      * @param {object} filter - Filtro de búsqueda
      * @param {number} limit - Límite de resultados

@@ -9,8 +9,18 @@ const EventSchema = new mongoose.Schema({
     
     // Configuración de precios
     priceRange: {
-        min: { type: Number, required: true },
-        max: { type: Number, required: true }
+        min: { 
+            type: Number, 
+            required: function() {
+                return !this.isFree; // Solo requerido si NO es evento gratuito
+            }
+        },
+        max: { 
+            type: Number, 
+            required: function() {
+                return !this.isFree; // Solo requerido si NO es evento gratuito
+            }
+        }
     },
     
     // Capacidad de entradas

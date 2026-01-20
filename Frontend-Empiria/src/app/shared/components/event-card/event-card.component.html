@@ -1,6 +1,7 @@
 <div class="event-card" *ngIf="event" [routerLink]="['/events', event.id]">
     <div class="card-image">
-        <img [src]="event.imageUrl" [alt]="event.title">
+        <img [src]="event.imageUrl || 'assets/images/placeholder.jpg'" [alt]="event.title"
+            (error)="event.imageUrl = 'assets/images/placeholder.jpg'">
         <div class="card-overlay">
             <span class="presale-badge" *ngIf="event.isPreventa">PREVENTA</span>
             <span class="category-tag">{{ event.categories[0] }}</span>

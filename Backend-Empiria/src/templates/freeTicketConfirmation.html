@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Entradas Gratuitas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #34d399 0%, #22c55e 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+        }
+
+        .email-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .email-body {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .event-card {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(34, 197, 94, 0.05));
+            border: 2px solid #34d399;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .free-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #34d399, #22c55e);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .event-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 20px;
+        }
+
+        .ticket-count {
+            background-color: white;
+            border: 2px solid #34d399;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .ticket-count-label {
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .ticket-count-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .event-info {
+            margin: 15px 0;
+            display: flex;
+            align-items: flex-start;
+            font-size: 15px;
+        }
+
+        .info-icon {
+            width: 30px;
+            font-size: 18px;
+            margin-right: 15px;
+            color: #22c55e;
+        }
+
+        .info-content h3 {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content p {
+            font-size: 15px;
+            color: #333;
+        }
+
+        .description-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #34d399;
+        }
+
+        .description-box h3 {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .description-box p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .cta-section {
+            background-color: #f9f9f9;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .cta-section h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #34d399, #22c55e);
+            color: white;
+            padding: 16px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.4);
+        }
+
+        .secondary-button {
+            background: white;
+            color: #22c55e;
+            border: 2px solid #22c55e;
+        }
+
+        .secondary-button:hover {
+            background-color: rgba(52, 211, 153, 0.1);
+        }
+
+        .info-box {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .info-box h3 {
+            font-size: 16px;
+            color: #0c4a6e;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #0c4a6e;
+        }
+
+        .info-box li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .footer {
+            background-color: #1f2937;
+            color: #d1d5db;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #34d399;
+            margin-bottom: 15px;
+        }
+
+        .footer p {
+            margin: 8px 0;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #34d399;
+            text-decoration: none;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-links a {
+            color: #9ca3af;
+            margin: 0 10px;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+            }
+
+            .email-body {
+                padding: 30px 20px;
+            }
+
+            .email-header h1 {
+                font-size: 24px;
+            }
+
+            .event-title {
+                font-size: 20px;
+            }
+
+            .cta-button {
+                display: block;
+                margin: 10px 0;
+                padding: 14px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="success-icon">✓</div>
+            <h1>¡Confirmación Exitosa!</h1>
+            <p>Tus entradas están listas</p>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <p class="greeting">Hola <strong>{{nombre}}</strong>,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px; color: #555;">
+                ¡Excelente noticia! Hemos confirmado tu solicitud de entradas gratuitas. 
+                Ya puedes verlas y descargar tus códigos QR desde tu cuenta.
+            </p>
+
+            <!-- Event Card -->
+            <div class="event-card">
+                <span class="free-badge">🎁 ENTRADA GRATUITA</span>
+                <h2 class="event-title">{{titulo}}</h2>
+
+                <div class="ticket-count">
+                    <div class="ticket-count-label">Cantidad de Entradas</div>
+                    <div class="ticket-count-value">{{cantidad}}</div>
+                </div>
+
+                <div class="event-info">
+                    <div class="info-icon">📅</div>
+                    <div class="info-content">
+                        <h3>Fecha</h3>
+                        <p>{{fecha}}</p>
+                    </div>
+                </div>
+
+                <div class="event-info">
+                    <div class="info-icon">🕐</div>
+                    <div class="info-content">
+                        <h3>Horario</h3>
+                        <p>{{hora}} HRS</p>
+                    </div>
+                </div>
+
+                <div class="event-info">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <h3>Ubicación</h3>
+                        <p>{{ubicacion}}</p>
+                    </div>
+                </div>
+
+                <div class="description-box">
+                    <h3>Acerca del Evento</h3>
+                    <p>{{descripcion}}</p>
+                </div>
+            </div>
+
+            <!-- Important Info -->
+            <div class="info-box">
+                <h3>📋 Información Importante</h3>
+                <ul>
+                    <li><strong>Código QR:</strong> Descarga tu código QR desde "Mis Entradas"</li>
+                    <li><strong>Ingreso:</strong> Presenta el código QR en la entrada del evento</li>
+                    <li><strong>Transferencia:</strong> Las entradas son nominales y no transferibles</li>
+                    <li><strong>Confirmación:</strong> Llega 15 minutos antes del evento</li>
+                </ul>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h2>Accede a tus entradas</h2>
+                <a href="{{enlaceTickets}}" class="cta-button">Ver Mis Entradas</a>
+                <a href="{{enlaceEvento}}" class="cta-button secondary-button">Detalles del Evento</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666; margin-top: 30px; text-align: center;">
+                ¿Tienes alguna pregunta? No dudes en contactarnos respondiendo a este correo.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-logo">Empiria Jujuy</div>
+            <p>Tu plataforma de eventos en Jujuy</p>
+            <div class="social-links">
+                <a href="#">📘</a>
+                <a href="#">📷</a>
+                <a href="#">🐦</a>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px;">
+                Este correo fue enviado a {{nombre}} porque solicitaste entradas para un evento.<br>
+                © 2026 Empiria Jujuy. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

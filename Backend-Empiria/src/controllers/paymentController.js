@@ -5,6 +5,7 @@ const Payment = require('../models/Payment');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Reservation = require('../models/Reservation');
+const emailService = require('../services/emailService');
 
 // Configure Mercado Pago
 const client = new MercadoPago.MercadoPagoConfig({
@@ -532,6 +533,35 @@ const requestFreeTickets = async (req, res) => {
             return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
         }
 
+        // ✅ VERIFICAR: Límite de entradas por usuario (máximo 4 entradas gratuitas por evento)
+        const userExistingTickets = await Ticket.countDocuments({
+            user: userId,
+            event: eventId,
+            status: { $in: ['approved', 'pending'] }
+        });
+
+        const maxFreeTickets = 4;
+        if (userExistingTickets >= maxFreeTickets) {
+            return res.status(400).json({
+                status: 0,
+                msg: `Ya tienes el máximo de ${maxFreeTickets} entradas gratuitas para este evento. No puedes solicitar más.`,
+                currentTickets: userExistingTickets,
+                maxAllowed: maxFreeTickets
+            });
+        }
+
+        // Calcular cuántas entradas adicionales puede solicitar
+        const canRequest = maxFreeTickets - userExistingTickets;
+        if (quantity > canRequest) {
+            return res.status(400).json({
+                status: 0,
+                msg: `Solo puedes solicitar ${canRequest} entrada(s) más para este evento.`,
+                currentTickets: userExistingTickets,
+                canRequest: canRequest,
+                requested: quantity
+            });
+        }
+
         // Check capacity and active reservations
         const activeReservations = await Reservation.aggregate([
             {
@@ -627,6 +657,15 @@ const requestFreeTickets = async (req, res) => {
             eventId,
             { $inc: { ticketsSold: quantity } }
         );
+
+        // Enviar email de confirmación
+        try {
+            await emailService.sendFreeTicketConfirmation(user, event, quantity, createdTickets);
+            console.log(`📧 Email de confirmación enviado a ${user.correo}`);
+        } catch (emailError) {
+            console.error('❌ Error enviando email de confirmación:', emailError.message);
+            // No detener el flujo si falla el email
+        }
 
         res.json({
             status: 1,

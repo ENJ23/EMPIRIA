@@ -132,6 +132,8 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
         switch (status?.toLowerCase()) {
             case 'approved':
                 return 'status-approved';
+            case 'free_approved':
+                return 'status-approved';
             case 'pending':
                 return 'status-pending';
             case 'rejected':
@@ -146,6 +148,8 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
         switch (status?.toLowerCase()) {
             case 'approved':
                 return 'Aprobado';
+            case 'free_approved':
+                return 'Gratuito';
             case 'pending':
                 return 'Pendiente';
             case 'rejected':

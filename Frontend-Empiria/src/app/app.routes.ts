@@ -11,8 +11,7 @@ import { LoginComponent } from './pages/admin/login/login.component';
 import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
 import { EventsAdminComponent } from './pages/admin/events-admin/events-admin.component';
 import { SalesAdminComponent } from './pages/admin/sales-admin/sales-admin.component';
-import { MyTicketsComponent } from './pages/my-tickets/my-tickets.component';
-import { MyPaymentsComponent } from './pages/my-payments/my-payments.component';
+
 
 
 export const routes: Routes = [
@@ -25,8 +24,16 @@ export const routes: Routes = [
     { path: 'tickets/:id', component: TicketDetailComponent },
 
     // User Dashboard Routes (authenticated users)
-    { path: 'mis-entradas', component: MyTicketsComponent, canActivate: [authGuard] },
-    { path: 'mis-pagos', component: MyPaymentsComponent, canActivate: [authGuard] },
+    {
+        path: 'mis-entradas',
+        loadComponent: () => import('./pages/my-tickets/my-tickets.component').then(m => m.MyTicketsComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'mis-pagos',
+        loadComponent: () => import('./pages/my-payments/my-payments.component').then(m => m.MyPaymentsComponent),
+        canActivate: [authGuard]
+    },
 
     // Admin Routes
     { path: 'admin/login', component: LoginComponent },

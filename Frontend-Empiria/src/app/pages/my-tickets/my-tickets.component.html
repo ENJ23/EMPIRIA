@@ -25,52 +25,86 @@
         <a routerLink="/events" class="btn btn-primary">Ver Eventos</a>
     </div>
 
+    <!-- Filter Section -->
+    <div class="filter-container no-print" *ngIf="!loading && tickets.length > 0">
+        <label for="eventFilter">Filtrar por Evento:</label>
+        <select id="eventFilter" [(ngModel)]="selectedEventId" (change)="filterTickets()" class="filter-select">
+            <option value="all">Todos los Eventos</option>
+            <option *ngFor="let event of uniqueEvents" [value]="event._id">
+                {{ event.title }}
+            </option>
+        </select>
+    </div>
+
     <!-- Tickets List -->
-    <div *ngIf="!loading && tickets.length > 0" class="tickets-list">
-        <div *ngFor="let ticket of tickets" class="ticket-row" [class.used]="ticket.isUsed"
+    <div *ngIf="!loading && displayedTickets.length > 0" class="tickets-list">
+        <div *ngFor="let ticket of displayedTickets" class="ticket-card" [class.used]="ticket.isUsed"
             [class.expired]="ticket.status === 'expired'">
 
-            <!-- Date Column -->
-            <div class="ticket-date-col">
-                <div class="date-box">
+            <!-- Left Side: Image & Date -->
+            <div class="card-media">
+                <img [src]="ticket.event?.imageUrl || 'assets/images/placeholder.jpg'" [alt]="ticket.event?.title"
+                    (error)="ticket.event && (ticket.event.imageUrl = 'assets/images/placeholder.jpg')">
+                <div class="date-overlay">
                     <span class="day">{{ ticket.event?.date | date:'dd' }}</span>
                     <span class="month">{{ ticket.event?.date | date:'MMM' }}</span>
                 </div>
+                <!-- Status overlay for mobile or visual flair -->
+                <div class="status-stripe" [ngClass]="getStatusClass(ticket.status)"></div>
             </div>
 
-            <!-- Main Info Column -->
-            <div class="ticket-info-col">
-                <h3 class="event-title">{{ ticket.event?.title }}</h3>
-                <div class="ticket-meta">
-                    <span class="meta-item">
-                        <span class="material-icons">place</span>
-                        {{ ticket.event?.location || 'Ver detalles' }}
-                    </span>
-                    <span class="meta-item">
+            <!-- Right Side: Content -->
+            <div class="card-body">
+                <div class="ticket-main-info">
+                    <h3 class="event-title">{{ ticket.event?.title }}</h3>
+                    <div class="location-row">
+                        <span class="material-icons">location_on</span>
+                        <span>{{ ticket.event?.location }}</span>
+                        <span class="separator">•</span>
                         <span class="material-icons">schedule</span>
-                        {{ ticket.event?.date | date:'shortTime' }} HRS
-                    </span>
+                        <span>{{ ticket.event?.date | date:'HH:mm' }} HS</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Status Column -->
-            <div class="ticket-status-col">
-                <span class="status-pill" [ngClass]="getStatusClass(ticket.status)">
-                    {{ getStatusLabel(ticket.status) }}
-                </span>
-                <span class="price-tag">{{ ticket.amount ? '$' + ticket.amount : 'Genera tu QR' }}</span>
-            </div>
+                <div class="ticket-meta-footer">
+                    <div class="status-price-group">
+                        <div class="status-badge" [ngClass]="getStatusClass(ticket.status)">
+                            {{ getStatusLabel(ticket.status) }}
+                        </div>
+                        <div class="price">
+                            {{ ticket.amount === 0 ? 'GRATUITO' : (ticket.amount |
+                            currency:'ARS':'symbol-narrow':'1.0-0') }}
+                        </div>
+                    </div>
 
-            <!-- Action Column -->
-            <div class="ticket-action-col">
-                <button *ngIf="ticket.entryQr" (click)="viewQR(ticket)" class="btn-icon-label">
-                    <span class="material-icons">qr_code_2</span>
-                    <span class="label-text">Ver QR</span>
-                </button>
-                <div *ngIf="!ticket.entryQr" class="pending-text">
-                    {{ getQrUnavailableMessage(ticket.status) }}
+                    <div class="action-area">
+                        <button class="btn-download-ticket" (click)="downloadQR(ticket)" [disabled]="!ticket.entryQr"
+                            [title]="ticket.entryQr ? 'Descargar Entrada' : getQrUnavailableMessage(ticket.status)">
+                            <span class="material-icons">download</span>
+                        </button>
+
+                        <button class="btn-view-qr" (click)="viewQR(ticket)">
+                            <span class="material-icons">qr_code_2</span>
+                            <span>Ver QR</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div *ngIf="!loading && displayedTickets.length === 0 && tickets.length > 0" class="empty-filter">
+        <p>No hay entradas para el filtro seleccionado.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-controls no-print" *ngIf="!loading && totalPages > 1">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+            <span class="material-icons">chevron_left</span> Anterior
+        </button>
+        <span class="page-info">Página {{ currentPage }} de {{ totalPages }}</span>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+            Siguiente <span class="material-icons">chevron_right</span>
+        </button>
     </div>
 </div>
