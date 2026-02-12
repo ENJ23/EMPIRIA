@@ -38,6 +38,10 @@ const EventSchema = new mongoose.Schema({
     
     // NUEVO: Solo precio general (sin opción VIP)
     onlyGeneralPrice: { type: Boolean, default: false },
+
+    // Reseñas
+    ratingAverage: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
     
     categories: [{ type: String }],
     createdAt: { type: Date, default: Date.now }

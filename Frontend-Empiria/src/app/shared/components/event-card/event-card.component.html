@@ -18,8 +18,18 @@
                 <span class="material-icons">location_on</span>
                 {{ event.location }}
             </p>
+            <div class="card-rating" *ngIf="event.ratingCount && event.ratingCount > 0">
+                <div class="rating-stars">
+                    <span
+                        class="material-icons"
+                        *ngFor="let star of [1,2,3,4,5]"
+                        [class.active]="star <= (event.ratingAverage || 0)"
+                    >star</span>
+                </div>
+                <span class="rating-score">{{ event.ratingAverage || 0 }} ({{ event.ratingCount }})</span>
+            </div>
             <div class="card-footer">
-                <div class="price-wrapper" *ngIf="event.priceRange.min > 0">
+                <div class="price-wrapper" *ngIf="!event.isFree && event.priceRange && event.priceRange.min > 0">
                     <ng-container *ngIf="event.isPreventa; else regularPrice">
                         <span class="offer-label">OFERTA</span>
                         <span class="price highlight">
@@ -30,7 +40,7 @@
                         <span class="price">Desde ${{ event.priceRange.min }}</span>
                     </ng-template>
                 </div>
-                <span class="price-free" *ngIf="event.priceRange.min === 0">
+                <span class="price-free" *ngIf="event.isFree || (event.priceRange && event.priceRange.min === 0)">
                     Entrada Libre
                 </span>
                 <button class="btn-text">Ver más &rarr;</button>

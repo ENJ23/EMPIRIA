@@ -460,6 +460,187 @@
     margin-top: 10px;
 }
 
+/* Reviews Section */
+.reviews-section {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+}
+
+.reviews-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: var(--spacing-md);
+}
+
+.reviews-subtitle {
+    color: var(--text-muted);
+}
+
+.reviews-summary {
+    text-align: right;
+}
+
+.summary-score {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
+.summary-stars,
+.review-stars {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.summary-stars .material-icons,
+.review-stars .material-icons {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.summary-stars .material-icons.active,
+.review-stars .material-icons.active {
+    color: #fbbf24;
+}
+
+.summary-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.review-form {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.review-form h3 {
+    margin-bottom: 8px;
+}
+
+.form-hint {
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.form-row select,
+.form-row textarea {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text-main);
+    padding: 10px 12px;
+    font-size: 0.95rem;
+}
+
+.form-alert {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.form-alert.error {
+    color: #f87171;
+}
+
+.form-alert.success {
+    color: #34d399;
+}
+
+.reviews-list {
+    display: grid;
+    gap: 12px;
+}
+
+.review-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+}
+
+.review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.review-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.review-comment {
+    color: var(--text-muted);
+}
+
+.review-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.review-actions .btn-text {
+    font-size: 0.85rem;
+    text-transform: none;
+    padding: 0;
+}
+
+.review-actions .btn-text.danger {
+    color: #f87171;
+}
+
+.review-edit {
+    margin-top: 10px;
+}
+
+.reviews-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.empty-reviews {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 16px;
+}
+
+@media (max-width: 768px) {
+    .reviews-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reviews-summary {
+        text-align: left;
+    }
+
+    .summary-stars,
+    .review-stars {
+        justify-content: flex-start;
+    }
+}
+
 /* Free Event Styles - Premium Makeover */
 .free-event-card {
     background: linear-gradient(145deg, rgba(23, 23, 23, 0.95), rgba(35, 35, 35, 0.95));

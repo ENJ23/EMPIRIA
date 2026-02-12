@@ -134,6 +134,32 @@
     font-size: 1rem;
 }
 
+.card-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-stars .material-icons {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.rating-stars .material-icons.active {
+    color: #fbbf24;
+}
+
+.rating-score {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
 .card-footer {
     margin-top: auto;
     display: flex;

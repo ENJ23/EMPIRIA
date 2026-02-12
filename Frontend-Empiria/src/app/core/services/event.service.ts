@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { Event } from '../models/event.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -21,6 +21,34 @@ export class EventService {
                 return res.events.map((e: any) => ({
                     ...e,
                     id: e._id, // Map _id to id
+                    date: new Date(e.date)
+                }));
+            })
+        );
+    }
+
+    getEventsFiltered(filters: {
+        category?: string;
+        dateFrom?: string;
+        dateTo?: string;
+        priceMin?: number;
+        priceMax?: number;
+        sortBy?: 'date' | 'price' | 'popularity';
+    }): Observable<Event[]> {
+        let params = new HttpParams();
+
+        if (filters.category) params = params.set('category', filters.category);
+        if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+        if (typeof filters.priceMin === 'number') params = params.set('priceMin', String(filters.priceMin));
+        if (typeof filters.priceMax === 'number') params = params.set('priceMax', String(filters.priceMax));
+        if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+
+        return this.http.get<any>(this.apiUrl, { params }).pipe(
+            map(res => {
+                return res.events.map((e: any) => ({
+                    ...e,
+                    id: e._id,
                     date: new Date(e.date)
                 }));
             })

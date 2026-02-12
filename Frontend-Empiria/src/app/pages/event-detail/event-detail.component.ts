@@ -1,17 +1,21 @@
 import { Component, OnInit, inject, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../core/services/event.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { TicketService } from '../../core/services/ticket.service';
+import { ReviewService } from '../../core/services/review.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Event } from '../../core/models/event.model';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Review, ReviewSummary } from '../../core/models/review.model';
+import { Observable, finalize, switchMap, tap } from 'rxjs';
 import * as QRCode from 'qrcode';
 
 @Component({
     selector: 'app-event-detail',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './event-detail.component.html',
     styleUrl: './event-detail.component.css'
 })
@@ -33,6 +37,23 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     isProcessing = false;
     private paymentDbId: string | null = null; // Payment _id returned by backend
 
+    // Reviews
+    reviews: Review[] = [];
+    reviewSummary: ReviewSummary = { average: 0, count: 0 };
+    reviewRating: number = 5;
+    reviewComment: string = '';
+    reviewError: string | null = null;
+    reviewSuccess: string | null = null;
+    isReviewSubmitting = false;
+    isLoadingReviews = false;
+    reviewsPage = 1;
+    reviewsLimit = 5;
+    hasMoreReviews = false;
+    editingReviewId: string | null = null;
+    editRating: number = 5;
+    editComment: string = '';
+    readonly ratingOptions = [1, 2, 3, 4, 5];
+
     // UI Error State for purchase
     purchaseErrorMsg: string | null = null;
     purchaseErrorDetails: { available?: number; requested?: number; soldOut?: boolean } = {};
@@ -43,6 +64,8 @@ export class EventDetailComponent implements OnInit, OnDestroy {
 
     private paymentService = inject(PaymentService);
     private ticketService = inject(TicketService);
+    private reviewService = inject(ReviewService);
+    private authService = inject(AuthService);
     private cdr = inject(ChangeDetectorRef);
     private ngZone = inject(NgZone);
     private router = inject(Router);
@@ -54,7 +77,12 @@ export class EventDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.event$ = this.route.paramMap.pipe(
-            tap(params => this.eventId = params.get('id')),
+            tap(params => {
+                this.eventId = params.get('id');
+                if (this.eventId) {
+                    this.loadReviews(this.eventId);
+                }
+            }),
             switchMap(params => {
                 const id = params.get('id');
                 return this.eventService.getEventById(id!);
@@ -69,6 +97,191 @@ export class EventDetailComponent implements OnInit, OnDestroy {
                 }
             })
         );
+    }
+
+    isAuthenticated(): boolean {
+        return this.authService.isAuthenticated();
+    }
+
+    loadReviews(eventId: string) {
+        this.isLoadingReviews = true;
+        this.reviewService.getEventReviews(eventId, this.reviewsPage, this.reviewsLimit).pipe(
+            finalize(() => {
+                this.isLoadingReviews = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (res) => {
+                if (this.reviewsPage === 1) {
+                    this.reviews = res.reviews || [];
+                } else {
+                    this.reviews = [...this.reviews, ...(res.reviews || [])];
+                }
+                this.reviewSummary = res.summary || { average: 0, count: 0 };
+                this.hasMoreReviews = !!res.pagination?.hasMore;
+            },
+            error: () => {
+                if (this.reviewsPage === 1) {
+                    this.reviews = [];
+                    this.reviewSummary = { average: 0, count: 0 };
+                }
+                this.hasMoreReviews = false;
+            }
+        });
+    }
+
+    loadMoreReviews() {
+        if (!this.eventId || !this.hasMoreReviews || this.isLoadingReviews) return;
+        this.reviewsPage += 1;
+        this.loadReviews(this.eventId);
+    }
+
+    submitReview() {
+        if (!this.eventId) return;
+
+        this.reviewError = null;
+        this.reviewSuccess = null;
+
+        if (!this.isAuthenticated()) {
+            this.reviewError = 'Debes iniciar sesión para dejar una reseña.';
+            return;
+        }
+
+        const rating = Number(this.reviewRating);
+        const comment = this.reviewComment.trim();
+
+        if (!rating || rating < 1 || rating > 5 || !comment) {
+            this.reviewError = 'Completa la calificación y el comentario.';
+            return;
+        }
+
+        this.isReviewSubmitting = true;
+        this.reviewService.createReview(this.eventId, { rating, comment }).pipe(
+            finalize(() => {
+                this.isReviewSubmitting = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (res) => {
+                this.reviewSuccess = 'Gracias por tu reseña!';
+                if (res?.review) {
+                    this.reviews = [
+                        {
+                            id: res.review._id,
+                            event: res.review.event,
+                            user: res.review.user,
+                            rating: res.review.rating,
+                            comment: res.review.comment,
+                            createdAt: res.review.createdAt
+                        },
+                        ...this.reviews
+                    ];
+                }
+                if (res?.summary) {
+                    this.reviewSummary = res.summary;
+                }
+                this.reviewRating = 5;
+                this.reviewComment = '';
+                this.reviewsPage = 1;
+                this.loadReviews(this.eventId!);
+            },
+            error: (err) => {
+                const msg = err?.error?.msg || 'No se pudo guardar la reseña.';
+                this.reviewError = msg;
+            }
+        });
+    }
+
+    isOwner(review: Review): boolean {
+        const current = this.authService.currentUser();
+        return !!current && review.user?._id === current.userid;
+    }
+
+    startEditReview(review: Review) {
+        this.editingReviewId = review.id || null;
+        this.editRating = review.rating;
+        this.editComment = review.comment;
+        this.reviewError = null;
+        this.reviewSuccess = null;
+    }
+
+    cancelEditReview() {
+        this.editingReviewId = null;
+        this.editRating = 5;
+        this.editComment = '';
+    }
+
+    saveReview(review: Review) {
+        if (!this.eventId || !review.id) return;
+        const rating = Number(this.editRating);
+        const comment = this.editComment.trim();
+
+        if (!rating || rating < 1 || rating > 5 || !comment) {
+            this.reviewError = 'Completa la calificación y el comentario.';
+            return;
+        }
+
+        this.isReviewSubmitting = true;
+        this.reviewService.updateReview(this.eventId, review.id, { rating, comment }).pipe(
+            finalize(() => {
+                this.isReviewSubmitting = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (res) => {
+                this.reviewSuccess = 'Reseña actualizada.';
+                this.editingReviewId = null;
+                if (res?.review) {
+                    this.reviews = this.reviews.map((item) =>
+                        item.id === res.review._id
+                            ? {
+                                id: res.review._id,
+                                event: res.review.event,
+                                user: res.review.user,
+                                rating: res.review.rating,
+                                comment: res.review.comment,
+                                createdAt: res.review.createdAt
+                            }
+                            : item
+                    );
+                }
+                if (res?.summary) {
+                    this.reviewSummary = res.summary;
+                }
+            },
+            error: (err) => {
+                const msg = err?.error?.msg || 'No se pudo actualizar la reseña.';
+                this.reviewError = msg;
+            }
+        });
+    }
+
+    deleteReview(review: Review) {
+        if (!this.eventId || !review.id) return;
+
+        this.isReviewSubmitting = true;
+        this.reviewService.deleteReview(this.eventId, review.id).pipe(
+            finalize(() => {
+                this.isReviewSubmitting = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (res) => {
+                this.reviewSuccess = 'Reseña eliminada.';
+                this.reviews = this.reviews.filter((item) => item.id !== review.id);
+                if (res?.summary) {
+                    this.reviewSummary = res.summary;
+                }
+                if (!this.reviews.length) {
+                    this.reviewsPage = 1;
+                    this.loadReviews(this.eventId!);
+                }
+            },
+            error: (err) => {
+                const msg = err?.error?.msg || 'No se pudo eliminar la reseña.';
+                this.reviewError = msg;
+            }
+        });
     }
 
     ngOnDestroy() {

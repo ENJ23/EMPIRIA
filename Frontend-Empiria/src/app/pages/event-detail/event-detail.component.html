@@ -39,6 +39,109 @@
                     </div>
                 </div>
             </section>
+
+            <section class="section reviews-section">
+                <div class="reviews-header">
+                    <div>
+                        <h2 class="section-heading">Reseñas</h2>
+                        <p class="reviews-subtitle">Opiniones de quienes asistieron.</p>
+                    </div>
+                    <div class="reviews-summary">
+                        <div class="summary-score">{{ reviewSummary.average || 0 }}</div>
+                        <div class="summary-stars">
+                            <span
+                                class="material-icons"
+                                *ngFor="let star of ratingOptions"
+                                [class.active]="star <= (reviewSummary.average || 0)"
+                            >star</span>
+                        </div>
+                        <span class="summary-count">{{ reviewSummary.count || 0 }} reseñas</span>
+                    </div>
+                </div>
+
+                <div class="review-form">
+                    <h3>Deja tu reseña</h3>
+                    <p class="form-hint" *ngIf="!isAuthenticated()">
+                        Inicia sesión para calificar este evento.
+                    </p>
+                    <div class="form-row">
+                        <label>Calificación</label>
+                        <select [(ngModel)]="reviewRating" [disabled]="!isAuthenticated()">
+                            <option *ngFor="let option of ratingOptions" [value]="option">{{ option }}</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Comentario</label>
+                        <textarea
+                            rows="4"
+                            placeholder="Cuéntanos tu experiencia"
+                            [(ngModel)]="reviewComment"
+                            [disabled]="!isAuthenticated()"
+                        ></textarea>
+                    </div>
+                    <div class="form-alert error" *ngIf="reviewError">{{ reviewError }}</div>
+                    <div class="form-alert success" *ngIf="reviewSuccess">{{ reviewSuccess }}</div>
+                    <button class="btn" type="button" (click)="submitReview()" [disabled]="!isAuthenticated() || isReviewSubmitting">
+                        {{ isReviewSubmitting ? 'Enviando...' : 'Enviar reseña' }}
+                    </button>
+                </div>
+
+                <div class="reviews-list">
+                    <div class="review-card" *ngFor="let review of reviews">
+                        <div class="review-head">
+                            <div>
+                                <strong>{{ review.user?.nombre }} {{ review.user?.apellido }}</strong>
+                                <div class="review-date">{{ review.createdAt | date:'mediumDate' }}</div>
+                            </div>
+                            <div class="review-stars">
+                                <span
+                                    class="material-icons"
+                                    *ngFor="let star of ratingOptions"
+                                    [class.active]="star <= review.rating"
+                                >star</span>
+                            </div>
+                        </div>
+
+                        <div class="review-edit" *ngIf="editingReviewId === review.id">
+                            <div class="form-row">
+                                <label>Calificación</label>
+                                <select [(ngModel)]="editRating">
+                                    <option *ngFor="let option of ratingOptions" [value]="option">{{ option }}</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Comentario</label>
+                                <textarea rows="3" [(ngModel)]="editComment"></textarea>
+                            </div>
+                            <div class="review-actions">
+                                <button class="btn" type="button" (click)="saveReview(review)" [disabled]="isReviewSubmitting">
+                                    Guardar
+                                </button>
+                                <button class="btn-ghost" type="button" (click)="cancelEditReview()">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="review-comment" *ngIf="editingReviewId !== review.id">{{ review.comment }}</p>
+
+                        <div class="review-actions" *ngIf="editingReviewId !== review.id && isOwner(review)">
+                            <button class="btn-text" type="button" (click)="startEditReview(review)">Editar</button>
+                            <button class="btn-text danger" type="button" (click)="deleteReview(review)">Eliminar</button>
+                        </div>
+                    </div>
+
+                    <div class="empty-reviews" *ngIf="reviews.length === 0">
+                        Aún no hay reseñas. Sé el primero en dejar una.
+                    </div>
+
+                    <div class="reviews-footer" *ngIf="hasMoreReviews">
+                        <button class="btn-ghost" type="button" (click)="loadMoreReviews()" [disabled]="isLoadingReviews">
+                            {{ isLoadingReviews ? 'Cargando...' : 'Ver más reseñas' }}
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
 
         <aside class="sidebar">

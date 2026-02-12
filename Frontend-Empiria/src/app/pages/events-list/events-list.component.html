@@ -3,8 +3,58 @@
     <p class="page-subtitle">Explora lo mejor de la cultura y el entretenimiento en Jujuy.</p>
 </div>
 
+<div class="filters-panel container">
+    <div class="filters-header">
+        <div class="filters-title">
+            <span class="filters-kicker">Descubri</span>
+            <h2>Filtros avanzados</h2>
+        </div>
+        <button class="btn-ghost" type="button" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+
+    <div class="filters-grid">
+        <div class="filter-field">
+            <label>Categoria</label>
+            <input type="text" placeholder="Ej: Musica, Teatro, Cine" [(ngModel)]="filters.category"
+                (input)="onFilterChange()" />
+        </div>
+
+        <div class="filter-field">
+            <label>Fecha desde</label>
+            <input type="date" [(ngModel)]="filters.dateFrom" (change)="onFilterChange()" />
+        </div>
+
+        <div class="filter-field">
+            <label>Fecha hasta</label>
+            <input type="date" [(ngModel)]="filters.dateTo" (change)="onFilterChange()" />
+        </div>
+
+        <div class="filter-field">
+            <label>Precio max</label>
+            <input type="number" min="0" placeholder="50000" [(ngModel)]="filters.priceMax"
+                (input)="onFilterChange()" />
+        </div>
+
+        <div class="filter-field">
+            <label>Ordenar por</label>
+            <select [(ngModel)]="filters.sortBy" (change)="onFilterChange()">
+                <option value="date">Fecha (proximos)</option>
+                <option value="price">Precio (menor)</option>
+                <option value="popularity">Popularidad</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 <div class="container section">
+    <div class="loading-row" *ngIf="isLoading">
+        Cargando eventos...
+    </div>
     <div class="events-grid">
         <app-event-card *ngFor="let event of events$ | async" [event]="event"></app-event-card>
+    </div>
+    <div class="empty-state" *ngIf="!(isLoading) && (events$ | async)?.length === 0">
+        <h3>No encontramos eventos</h3>
+        <p>Proba ajustando los filtros para ver mas resultados.</p>
     </div>
 </div>
