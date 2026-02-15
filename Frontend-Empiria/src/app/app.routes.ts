@@ -44,6 +44,10 @@ export const routes: Routes = [
         children: [
             { path: 'events', component: EventsAdminComponent },
             { path: 'sales', component: SalesAdminComponent },
+            {
+                path: 'check-in',
+                loadComponent: () => import('./pages/admin/check-in/check-in.component').then(m => m.CheckInComponent)
+            },
             { path: '', redirectTo: 'events', pathMatch: 'full' }
         ]
     },

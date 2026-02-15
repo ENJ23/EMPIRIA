@@ -43,6 +43,16 @@ const TicketSchema = Schema({
         type: String,
         sparse: true,
         unique: true
+    },
+    checkedInAt: {
+        type: Date,
+        default: null,
+        index: true
+    },
+    checkedInBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
     }
 });
 

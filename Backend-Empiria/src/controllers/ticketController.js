@@ -1,6 +1,22 @@
 const Ticket = require('../models/Ticket');
 const { Types } = require('mongoose');
 
+const parseQrPayload = (qrData) => {
+    if (!qrData) return {};
+    if (typeof qrData !== 'string') return qrData;
+
+    try {
+        const parsed = JSON.parse(qrData);
+        if (parsed && typeof parsed === 'object') {
+            return parsed;
+        }
+    } catch (error) {
+        // Ignore parse errors, treat as raw string
+    }
+
+    return { ticketId: String(qrData) };
+};
+
 /**
  * Public: Check ticket status by Payment record ID (no JWT required)
  * GET /api/tickets/status?paymentId=<Payment._id>
@@ -318,6 +334,67 @@ const getMyTickets = async (req, res) => {
     }
 };
 
+/**
+ * Admin: Verify ticket QR and mark check-in
+ * POST /api/tickets/verify
+ * Requires JWT + Admin
+ */
+const verifyTicket = async (req, res) => {
+    try {
+        const { qrData, ticketId, eventId } = req.body;
+        const parsed = parseQrPayload(qrData);
+
+        const finalTicketId = ticketId || parsed.ticketId;
+        const finalEventId = eventId || parsed.eventId;
+
+        if (!finalTicketId) {
+            return res.status(400).json({ status: 0, msg: 'ticketId es requerido' });
+        }
+
+        const ticket = await Ticket.findById(finalTicketId)
+            .populate('event', 'title date location')
+            .populate('user', 'nombre apellido correo');
+
+        if (!ticket) {
+            return res.status(404).json({ status: 0, msg: 'Entrada no encontrada' });
+        }
+
+        if (finalEventId && ticket.event?._id?.toString() !== String(finalEventId)) {
+            return res.status(400).json({ status: 0, msg: 'La entrada no pertenece a este evento' });
+        }
+
+        if (ticket.status !== 'approved') {
+            return res.status(400).json({ status: 0, msg: 'Entrada no válida para ingreso' });
+        }
+
+        if (ticket.checkedInAt) {
+            return res.status(409).json({
+                status: 0,
+                msg: 'Entrada ya utilizada',
+                checkedInAt: ticket.checkedInAt
+            });
+        }
+
+        ticket.checkedInAt = new Date();
+        ticket.checkedInBy = req.uid;
+        await ticket.save();
+
+        res.json({
+            status: 1,
+            msg: 'Ingreso confirmado',
+            ticket: {
+                id: ticket._id,
+                event: ticket.event,
+                user: ticket.user,
+                checkedInAt: ticket.checkedInAt
+            }
+        });
+    } catch (error) {
+        console.error('Error verifying ticket:', error);
+        res.status(500).json({ status: 0, msg: 'Error interno' });
+    }
+};
+
 module.exports = {
     checkTicketStatus,
     checkTicketStatusByPaymentId,
@@ -325,6 +402,7 @@ module.exports = {
     getTicketByPaymentId,
     getTicketByIdPublic,
     getTicketsByPaymentId, // Export new method
+    verifyTicket,
     listTickets,
     getMyTickets
 };

@@ -1,0 +1,85 @@
+<div class="checkin-page">
+    <div class="checkin-header">
+        <h1>Check-in de entradas</h1>
+        <p>Escanea el QR para validar el ingreso.</p>
+    </div>
+
+    <div class="checkin-card" *ngIf="!isAdmin">
+        <p>Acceso restringido. Debes iniciar sesion como administrador.</p>
+    </div>
+
+    <div class="checkin-grid" *ngIf="isAdmin">
+        <div class="checkin-card">
+            <div class="event-selector">
+                <label>Evento</label>
+                <select [(ngModel)]="selectedEventId" [disabled]="isLoadingEvents || events.length === 0">
+                    <option value="" disabled>Selecciona un evento</option>
+                    <option *ngFor="let event of events" [value]="event.id">
+                        {{ event.title }} - {{ event.date | date:'shortDate' }}
+                    </option>
+                </select>
+                <p class="selector-hint" *ngIf="isLoadingEvents">Cargando eventos...</p>
+                <p class="selector-hint" *ngIf="!isLoadingEvents && events.length === 0">
+                    No hay eventos disponibles.
+                </p>
+            </div>
+
+            <div class="camera-box" [class.active]="isCameraActive">
+                <video #video muted playsinline></video>
+                <canvas #canvas class="hidden-canvas"></canvas>
+                <div class="camera-placeholder" *ngIf="!isCameraActive">
+                    <span class="material-icons">qr_code_scanner</span>
+                    <p>Camara apagada</p>
+                </div>
+            </div>
+
+            <div class="camera-actions">
+                <button class="btn" type="button" (click)="startCamera()" [disabled]="isCameraActive">
+                    Activar camara
+                </button>
+                <button class="btn-ghost" type="button" (click)="stopCamera()" [disabled]="!isCameraActive">
+                    Detener camara
+                </button>
+                <button class="btn-ghost" type="button" (click)="resumeScanning()" [disabled]="!isCameraActive || isScanning">
+                    Reanudar escaneo
+                </button>
+            </div>
+
+            <div class="manual-box">
+                <label>Verificacion manual</label>
+                <textarea
+                    rows="3"
+                    placeholder="Pega el QR o el ID de la entrada"
+                    [(ngModel)]="manualInput"
+                ></textarea>
+                <button class="btn" type="button" (click)="verifyManual()" [disabled]="isProcessing">
+                    Verificar
+                </button>
+            </div>
+        </div>
+
+        <div class="checkin-card">
+            <h3>Resultado</h3>
+            <div class="result-box" [class.success]="resultStatus === 'success'" [class.error]="resultStatus === 'error'">
+                <p *ngIf="resultStatus === 'idle'">Escanea un QR para ver el resultado.</p>
+                <p *ngIf="resultStatus !== 'idle'">{{ resultMessage }}</p>
+            </div>
+
+            <div class="ticket-details" *ngIf="resultTicket">
+                <h4>Entrada confirmada</h4>
+                <div class="detail-row">
+                    <span>Evento</span>
+                    <strong>{{ resultTicket.event?.title }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Persona</span>
+                    <strong>{{ resultTicket.user?.nombre }} {{ resultTicket.user?.apellido }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Check-in</span>
+                    <strong>{{ resultTicket.checkedInAt | date:'short' }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

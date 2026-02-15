@@ -102,6 +102,13 @@ export class TicketService {
         );
     }
 
+    verifyTicket(payload: { ticketId?: string; qrData?: string; eventId?: string }): Observable<any> {
+        const token = this.authService.getToken();
+        return this.http.post(`${this.apiUrl}/verify`, payload, {
+            headers: { 'x-token': token || '' }
+        });
+    }
+
     getMyTickets(): Observable<any> {
         const token = this.authService.getToken();
         return this.http.get(`${this.apiUrl}/my-tickets`, {
