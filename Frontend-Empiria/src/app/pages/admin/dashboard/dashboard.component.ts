@@ -13,8 +13,17 @@ import { AuthService } from '../../../core/services/auth.service';
 export class DashboardComponent {
     private authService = inject(AuthService);
     user = this.authService.currentUser;
+    sidebarOpen = false;
 
     logout() {
         this.authService.logout();
+    }
+
+    toggleSidebar() {
+        this.sidebarOpen = !this.sidebarOpen;
+    }
+
+    closeSidebar() {
+        this.sidebarOpen = false;
     }
 }

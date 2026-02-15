@@ -90,6 +90,19 @@ img {
   padding: 0 var(--spacing-sm);
 }
 
+/* Mobile-specific padding */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
 .btn {
   display: inline-block;
   padding: 12px 32px;
@@ -126,6 +139,19 @@ img {
 
 .section {
   padding: var(--spacing-lg) 0;
+}
+
+/* Mobile section padding */
+@media (max-width: 768px) {
+  .section {
+    padding: var(--spacing-md) 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: var(--spacing-sm) 0;
+  }
 }
 
 .text-gradient {

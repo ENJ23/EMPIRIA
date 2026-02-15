@@ -1,23 +1,65 @@
 <header class="header">
     <div class="container header-content">
-        <a routerLink="/" class="logo">
+        <a routerLink="/" class="logo" (click)="closeMobileMenu()">
             <span class="logo-text">EMPIRIA</span>
         </a>
 
-        <nav class="nav-menu">
-            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
-                class="nav-link">Inicio</a>
-            <a routerLink="/events" routerLinkActive="active" class="nav-link">Eventos</a>
-            <a routerLink="/calendar" routerLinkActive="active" class="nav-link">Calendario</a>
-            <a routerLink="/promociones" routerLinkActive="active" class="nav-link">Promociones</a>
-            <a routerLink="/contacto" routerLinkActive="active" class="nav-link">Contacto</a>
+        <!-- Hamburger Menu Button (Mobile Only) -->
+        <button class="hamburger" [class.active]="mobileMenuOpen" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-overlay" [class.active]="mobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu" [class.mobile-open]="mobileMenuOpen">
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link"
+                (click)="closeMobileMenu()">Inicio</a>
+            <a routerLink="/events" routerLinkActive="active" class="nav-link" (click)="closeMobileMenu()">Eventos</a>
+            <a routerLink="/calendar" routerLinkActive="active" class="nav-link"
+                (click)="closeMobileMenu()">Calendario</a>
+            <a routerLink="/promociones" routerLinkActive="active" class="nav-link"
+                (click)="closeMobileMenu()">Promociones</a>
+            <a routerLink="/contacto" routerLinkActive="active" class="nav-link"
+                (click)="closeMobileMenu()">Contacto</a>
+
+            <!-- Mobile User Actions (inside menu) -->
+            <div class="mobile-user-section">
+                <ng-container *ngIf="authService.currentUser() as user">
+                    <div class="mobile-user-info">
+                        <span class="mobile-user-name">{{ user.nombre }}</span>
+                        <a routerLink="/mis-entradas" routerLinkActive="active" class="mobile-nav-link"
+                            (click)="closeMobileMenu()">
+                            <span class="material-icons">confirmation_number</span>
+                            <span>Mis entradas</span>
+                        </a>
+                        <a routerLink="/mis-pagos" routerLinkActive="active" class="mobile-nav-link"
+                            (click)="closeMobileMenu()">
+                            <span class="material-icons">receipt_long</span>
+                            <span>Mis pagos</span>
+                        </a>
+                        <a *ngIf="user.tipo === 'Admin'" routerLink="/admin" class="mobile-nav-link"
+                            (click)="closeMobileMenu()">
+                            <span class="material-icons">dashboard</span>
+                            <span>Dashboard</span>
+                        </a>
+                        <button (click)="logout()" class="mobile-logout-btn">
+                            <span class="material-icons">logout</span>
+                            <span>Cerrar Sesión</span>
+                        </button>
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="!authService.currentUser()">
+                    <a routerLink="/admin/login" class="mobile-login-btn" (click)="closeMobileMenu()">Ingresar</a>
+                </ng-container>
+            </div>
         </nav>
 
-        <div class="user-actions">
-            <!-- <button class="btn-icon">
-                <span class="material-icons">search</span>
-            </button> -->
-
+        <!-- Desktop User Actions -->
+        <div class="user-actions desktop-only">
             <ng-container *ngIf="authService.currentUser() as user; else loginButton">
                 <div class="user-info">
                     <span class="user-name">Hola, {{ user.nombre }}</span>

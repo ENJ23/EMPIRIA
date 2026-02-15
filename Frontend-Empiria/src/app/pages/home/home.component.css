@@ -106,3 +106,86 @@
 .mb-4 {
     margin-bottom: 1.5rem;
 }
+
+/* ==================== RESPONSIVE STYLES ==================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .about-grid {
+        gap: 3rem;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+        margin-top: -30px;
+        gap: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 1.5rem;
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .events-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .about-section {
+        background-attachment: scroll;
+        padding: var(--spacing-lg) 0;
+    }
+
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .lead {
+        font-size: 1.1rem;
+    }
+
+    .contact-box {
+        padding: var(--spacing-md);
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 1.25rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+}
