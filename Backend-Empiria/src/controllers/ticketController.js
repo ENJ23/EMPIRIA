@@ -1,6 +1,13 @@
 const Ticket = require('../models/Ticket');
 const { Types } = require('mongoose');
 
+const extractTicketId = (value) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+    const match = raw.match(/[a-fA-F0-9]{24}/);
+    return match ? match[0] : null;
+};
+
 const parseQrPayload = (qrData) => {
     if (!qrData) return {};
     if (typeof qrData !== 'string') return qrData;
@@ -14,7 +21,12 @@ const parseQrPayload = (qrData) => {
         // Ignore parse errors, treat as raw string
     }
 
-    return { ticketId: String(qrData) };
+    const extractedTicketId = extractTicketId(qrData);
+    if (extractedTicketId) {
+        return { ticketId: extractedTicketId };
+    }
+
+    return { ticketId: String(qrData).trim() };
 };
 
 /**
@@ -213,6 +225,12 @@ const getTicketsByPaymentId = async (req, res) => {
  */
 const getTicketByIdPublic = async (req, res) => {
     try {
+        const isProduction = process.env.NODE_ENV === 'production';
+        const allowPublicLookup = process.env.ALLOW_PUBLIC_TICKET_LOOKUP === 'true';
+        if (isProduction && !allowPublicLookup) {
+            return res.status(403).json({ status: 0, msg: 'Consulta pública deshabilitada' });
+        }
+
         const { id } = req.params;
         console.log(`[getTicketByIdPublic] Request for ticketId: ${id}`);
 
@@ -221,8 +239,7 @@ const getTicketByIdPublic = async (req, res) => {
         }
 
         const ticket = await Ticket.findById(id)
-            .populate('event', 'title date location imageUrl')
-            .populate('user', 'name email');
+            .populate('event', 'title date location imageUrl');
 
         if (!ticket) {
             console.log(`[getTicketByIdPublic] Ticket not found: ${id}`);
@@ -232,7 +249,14 @@ const getTicketByIdPublic = async (req, res) => {
         console.log(`[getTicketByIdPublic] ✅ Ticket found: ${ticket._id}`);
         res.json({
             status: 1,
-            ticket
+            ticket: {
+                _id: ticket._id,
+                event: ticket.event,
+                status: ticket.status,
+                purchasedAt: ticket.purchasedAt,
+                entryQr: ticket.entryQr,
+                checkedInAt: ticket.checkedInAt || null
+            }
         });
 
     } catch (error) {
@@ -319,7 +343,8 @@ const getMyTickets = async (req, res) => {
             amount: t.amount,
             purchasedAt: t.purchasedAt,
             entryQr: t.entryQr,
-            isUsed: t.isUsed || false
+            isUsed: !!t.checkedInAt,
+            checkedInAt: t.checkedInAt || null
         }));
 
         res.json({
@@ -351,6 +376,10 @@ const verifyTicket = async (req, res) => {
             return res.status(400).json({ status: 0, msg: 'ticketId es requerido' });
         }
 
+        if (!Types.ObjectId.isValid(String(finalTicketId))) {
+            return res.status(400).json({ status: 0, msg: 'Formato de ticket inválido' });
+        }
+
         const ticket = await Ticket.findById(finalTicketId)
             .populate('event', 'title date location')
             .populate('user', 'nombre apellido correo');
@@ -375,18 +404,40 @@ const verifyTicket = async (req, res) => {
             });
         }
 
-        ticket.checkedInAt = new Date();
-        ticket.checkedInBy = req.uid;
-        await ticket.save();
+        const checkedInAt = new Date();
+        const updatedTicket = await Ticket.findOneAndUpdate(
+            {
+                _id: ticket._id,
+                checkedInAt: null
+            },
+            {
+                $set: {
+                    checkedInAt,
+                    checkedInBy: req.uid
+                }
+            },
+            {
+                new: true
+            }
+        )
+            .populate('event', 'title date location')
+            .populate('user', 'nombre apellido correo');
+
+        if (!updatedTicket) {
+            return res.status(409).json({
+                status: 0,
+                msg: 'Entrada ya utilizada'
+            });
+        }
 
         res.json({
             status: 1,
             msg: 'Ingreso confirmado',
             ticket: {
-                id: ticket._id,
-                event: ticket.event,
-                user: ticket.user,
-                checkedInAt: ticket.checkedInAt
+                id: updatedTicket._id,
+                event: updatedTicket.event,
+                user: updatedTicket.user,
+                checkedInAt: updatedTicket.checkedInAt
             }
         });
     } catch (error) {

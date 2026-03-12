@@ -46,6 +46,15 @@
                     <span class="ticket-id">#{{ (ticket._id | uppercase).slice(0, 8) }}</span>
                 </div>
 
+                <div class="manual-token-box">
+                    <span class="token-label">Código manual</span>
+                    <strong class="token-value">{{ getManualToken(ticket) }}</strong>
+                    <button class="btn-copy-token" type="button" (click)="copyManualToken(ticket)">
+                        <span class="material-icons">content_copy</span>
+                        Copiar
+                    </button>
+                </div>
+
                 <div class="qr-wrapper">
                     <img [src]="qrCodes[ticket._id]" alt="QR de Entrada" class="qr-code" />
                 </div>

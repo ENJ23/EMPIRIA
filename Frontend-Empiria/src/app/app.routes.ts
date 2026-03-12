@@ -7,6 +7,7 @@ import { PromotionsComponent } from './pages/promotions/promotions.component';
 import { ContactComponent } from './pages/contact/contact.component';
 import { TicketDetailComponent } from './pages/ticket-detail/ticket-detail.component';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { LoginComponent } from './pages/admin/login/login.component';
 import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
 import { EventsAdminComponent } from './pages/admin/events-admin/events-admin.component';
@@ -36,11 +37,12 @@ export const routes: Routes = [
     },
 
     // Admin Routes
+    { path: 'login', component: LoginComponent },
     { path: 'admin/login', component: LoginComponent },
     {
         path: 'admin',
         component: DashboardComponent,
-        canActivate: [authGuard],
+        canActivate: [adminGuard],
         children: [
             { path: 'events', component: EventsAdminComponent },
             { path: 'sales', component: SalesAdminComponent },

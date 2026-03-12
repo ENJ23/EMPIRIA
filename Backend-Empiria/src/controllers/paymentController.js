@@ -15,17 +15,115 @@ const client = new MercadoPago.MercadoPagoConfig({
 const preference = new MercadoPago.Preference(client);
 const mpPayment = new MercadoPago.Payment(client);
 
+const getActiveReservedCount = async (eventId) => {
+    const activeReservations = await Reservation.aggregate([
+        {
+            $match: {
+                event: eventId,
+                confirmed: false,
+                reservedUntil: { $gt: new Date() }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalReserved: { $sum: '$quantity' }
+            }
+        }
+    ]);
+
+    return activeReservations.length > 0 ? activeReservations[0].totalReserved : 0;
+};
+
+const syncReservedTickets = async (eventId) => {
+    const reservedCount = await getActiveReservedCount(eventId);
+    await Event.findByIdAndUpdate(eventId, { reservedTickets: reservedCount });
+    return reservedCount;
+};
+
+const reserveStockAtomically = async (eventId, quantity) => {
+    return Event.findOneAndUpdate(
+        {
+            _id: eventId,
+            $expr: {
+                $lte: [
+                    {
+                        $add: [
+                            { $ifNull: ['$ticketsSold', 0] },
+                            { $ifNull: ['$reservedTickets', 0] },
+                            Number(quantity)
+                        ]
+                    },
+                    '$capacity'
+                ]
+            }
+        },
+        { $inc: { reservedTickets: Number(quantity) } },
+        { new: true }
+    );
+};
+
+const releaseReservedStock = async (eventId, quantity) => {
+    await Event.updateOne(
+        { _id: eventId },
+        [
+            {
+                $set: {
+                    reservedTickets: {
+                        $max: [
+                            0,
+                            {
+                                $subtract: [
+                                    { $ifNull: ['$reservedTickets', 0] },
+                                    Number(quantity)
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    );
+};
+
+const rollbackSoldTickets = async (eventId, quantity) => {
+    await Event.updateOne(
+        { _id: eventId },
+        [
+            {
+                $set: {
+                    ticketsSold: {
+                        $max: [
+                            0,
+                            {
+                                $subtract: [
+                                    { $ifNull: ['$ticketsSold', 0] },
+                                    Number(quantity)
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    );
+};
+
 /**
  * Create a Mercado Pago Preference
  * This initializes a payment and saves it to the Payment table
  */
 const createPreference = async (req, res) => {
+    let stockLocked = false;
+    let lockedQuantity = 0;
+    let lockedEventId = null;
     try {
         const { eventId, quantity, ticketType = 'general' } = req.body;
         const userId = req.uid;
+        const qty = Number(quantity);
 
         // Validaciones
-        if (!eventId || !quantity || quantity < 1) {
+        if (!eventId || !qty || qty < 1) {
             return res.status(400).json({
                 status: 0,
                 msg: 'Parámetros inválidos: eventId y quantity son requeridos'
@@ -54,27 +152,16 @@ const createPreference = async (req, res) => {
             });
         }
 
-        // Verificar capacidad del evento, considerando reservas activas
-        const activeReservations = await Reservation.aggregate([
-            {
-                $match: {
-                    event: event._id,
-                    confirmed: false,
-                    reservedUntil: { $gt: new Date() }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalReserved: { $sum: '$quantity' }
-                }
-            }
-        ]);
-        const reservedCount = activeReservations.length > 0 ? activeReservations[0].totalReserved : 0;
+        // Verificar que el usuario exista
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
+        }
+
+        // Sync reservas activas para evitar stock fantasma por TTL
+        const reservedCount = await syncReservedTickets(event._id);
         const ticketsSold = event.ticketsSold || 0;
         const availableTickets = event.capacity - ticketsSold - reservedCount;
-
-        console.log(`[createPreference] Availability calc - Capacity: ${event.capacity}, Sold: ${ticketsSold}, Reserved: ${reservedCount}, Available: ${availableTickets}`);
 
         if (availableTickets <= 0) {
             return res.status(400).json({
@@ -86,49 +173,30 @@ const createPreference = async (req, res) => {
         }
 
         // Verificar que la cantidad solicitada no exceda la disponibilidad
-        if (quantity > availableTickets) {
+        if (qty > availableTickets) {
             return res.status(400).json({
                 status: 0,
                 msg: `Solo hay ${availableTickets} entrada(s) disponible(s)`,
                 available: availableTickets,
-                requested: quantity
+                requested: qty
             });
         }
 
-        // Verificar que el usuario exista
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ status: 0, msg: 'Usuario no encontrado' });
-        }
-
-        // ✅ VALIDACIÓN FINAL ANTES DE CREAR NADA
-        // Re-check capacity justo antes de crear Preference + Reservation (race condition safeguard)
-        const finalCheck = await Reservation.aggregate([
-            {
-                $match: {
-                    event: event._id,
-                    confirmed: false,
-                    reservedUntil: { $gt: new Date() }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalReserved: { $sum: '$quantity' }
-                }
-            }
-        ]);
-        const finalReservedCount = finalCheck.length > 0 ? finalCheck[0].totalReserved : 0;
-        const finalAvailable = event.capacity - (event.ticketsSold || 0) - finalReservedCount;
-
-        if (quantity > finalAvailable) {
+        // Reserva atómica del stock para evitar overselling concurrente
+        const lockedEvent = await reserveStockAtomically(event._id, qty);
+        if (!lockedEvent) {
+            const latestEvent = await Event.findById(event._id).select('capacity ticketsSold reservedTickets');
+            const latestAvailable = Math.max(0, (latestEvent?.capacity || 0) - (latestEvent?.ticketsSold || 0) - (latestEvent?.reservedTickets || 0));
             return res.status(400).json({
                 status: 0,
-                msg: `Solo hay ${finalAvailable} entrada(s) disponible(s)`,
-                available: Math.max(0, finalAvailable),
-                requested: quantity
+                msg: `Solo hay ${latestAvailable} entrada(s) disponible(s)`,
+                available: latestAvailable,
+                requested: qty
             });
         }
+        stockLocked = true;
+        lockedQuantity = qty;
+        lockedEventId = event._id;
 
         // Determine price based on ticket type
         let price = event.priceRange.min;
@@ -138,9 +206,9 @@ const createPreference = async (req, res) => {
             price = event.preventaPrice;
         }
 
-        const totalAmount = price * quantity;
+        const totalAmount = price * qty;
 
-        console.log(`[createPreference] User: ${userId}, Event: ${eventId}, Quantity: ${quantity}, TicketType: ${ticketType}, Price: ${price}, Total: ${totalAmount}`);
+        console.log(`[createPreference] User: ${userId}, Event: ${eventId}, Quantity: ${qty}, TicketType: ${ticketType}, Price: ${price}, Total: ${totalAmount}`);
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
@@ -159,7 +227,7 @@ const createPreference = async (req, res) => {
                 items: [
                     {
                         title: `${event.title} - ${ticketType}`,
-                        quantity: Number(quantity),
+                        quantity: Number(qty),
                         unit_price: Number(price),
                         currency_id: 'ARS',
                         picture_url: event.imageUrl || ''
@@ -183,7 +251,7 @@ const createPreference = async (req, res) => {
             user: userId,
             event: eventId,
             amount: totalAmount,
-            quantity: Number(quantity),
+            quantity: Number(qty),
             ticketType: ticketType,
             mp_preference_id: result.id,
             mp_init_point: result.init_point,
@@ -201,7 +269,7 @@ const createPreference = async (req, res) => {
             user: userId,
             event: eventId,
             payment: savedPayment._id,
-            quantity: Number(quantity),
+            quantity: Number(qty),
             reservedUntil,
             confirmed: false
         });
@@ -218,6 +286,13 @@ const createPreference = async (req, res) => {
 
     } catch (error) {
         console.error('[createPreference] Error:', error.message);
+        if (stockLocked && lockedEventId && lockedQuantity > 0) {
+            try {
+                await releaseReservedStock(lockedEventId, lockedQuantity);
+            } catch (rollbackError) {
+                console.error('[createPreference] Error rolling back reserved stock:', rollbackError.message);
+            }
+        }
         res.status(500).json({ status: 0, msg: 'Error al procesar el pago' });
     }
 };
@@ -291,9 +366,19 @@ const receiveWebhook = async (req, res) => {
         // Find or update the Payment record
         let paymentRecord = await Payment.findOne({ mp_payment_id: paymentId });
 
+        // Prefer exact external_reference match (strongest link)
+        if (!paymentRecord && mpPaymentData.external_reference) {
+            paymentRecord = await Payment.findOne({
+                external_reference: mpPaymentData.external_reference
+            });
+            if (paymentRecord) {
+                console.log(`[webhook] Payment matched by external_reference: ${paymentRecord._id}`);
+            }
+        }
+
+        // Last resort fallback by latest pending user/event
         if (!paymentRecord) {
-            console.log(`[webhook] Payment not found by mp_payment_id, searching by user and event...`);
-            // Try to find by preference_id if not found by payment_id
+            console.log(`[webhook] Payment not found by mp_payment_id/external_reference, searching by user and event...`);
             const payments = await Payment.find({
                 user: userId,
                 event: eventId,
@@ -337,11 +422,6 @@ const receiveWebhook = async (req, res) => {
 
                 if (remainingToCreate === 0) {
                     console.log(`[webhook] Tickets already created for payment ${paymentRecord._id}. Existing: ${existingCount}/${qty}`);
-                    // Just mark reservation as confirmed (already done or no-op)
-                    await Reservation.updateOne(
-                        { payment: paymentRecord._id },
-                        { confirmed: true }
-                    );
                 } else {
                     // ✅ Crear tickets sin revalidar capacidad
                     // (confiamos en que fue validado en createPreference)
@@ -395,13 +475,17 @@ const receiveWebhook = async (req, res) => {
                         { new: true }
                     );
                     console.log(`[webhook] ✅ Event ticketsSold +${remainingToCreate} for event: ${eventId}`);
+                }
 
-                    // Mark reservation as confirmed
-                    await Reservation.updateOne(
-                        { payment: paymentRecord._id },
-                        { confirmed: true }
-                    );
-                    console.log(`[webhook] ✅ Reservation confirmed for payment: ${paymentRecord._id}`);
+                // Mark reservation as confirmed once and release reserved stock once
+                const reservation = await Reservation.findOneAndUpdate(
+                    { payment: paymentRecord._id, confirmed: false },
+                    { confirmed: true },
+                    { new: false }
+                );
+                if (reservation && reservation.quantity > 0) {
+                    await releaseReservedStock(eventId, reservation.quantity);
+                    console.log(`[webhook] ✅ Reserved stock released: -${reservation.quantity} for event ${eventId}`);
                 }
             } catch (e) {
                 console.error('[webhook] Error creating tickets:', e?.message || e);
@@ -409,7 +493,11 @@ const receiveWebhook = async (req, res) => {
         } else {
             console.log(`[webhook] Payment status is '${mpPaymentData.status}', not creating ticket`);
             // Clean up reservation if payment failed/rejected/cancelled
-            await Reservation.deleteOne({ payment: paymentRecord._id });
+            const reservation = await Reservation.findOneAndDelete({ payment: paymentRecord._id, confirmed: false });
+            if (reservation && reservation.quantity > 0) {
+                await releaseReservedStock(eventId, reservation.quantity);
+                console.log(`[webhook] ✅ Reserved stock released after failed payment: -${reservation.quantity} for event ${eventId}`);
+            }
             console.log(`[webhook] Reservation deleted for payment: ${paymentRecord._id}`);
         }
 
@@ -502,12 +590,16 @@ const getMyPayments = async (req, res) => {
  * Creates tickets directly without Mercado Pago
  */
 const requestFreeTickets = async (req, res) => {
+    let soldCommitted = false;
+    let committedEventId = null;
+    let committedQty = 0;
     try {
         const { eventId, quantity } = req.body;
         const userId = req.uid;
+        const qty = Number(quantity);
 
         // Validations
-        if (!eventId || !quantity || quantity < 1) {
+        if (!eventId || !qty || qty < 1) {
             return res.status(400).json({
                 status: 0,
                 msg: 'Parámetros inválidos: eventId y quantity son requeridos'
@@ -552,33 +644,38 @@ const requestFreeTickets = async (req, res) => {
 
         // Calcular cuántas entradas adicionales puede solicitar
         const canRequest = maxFreeTickets - userExistingTickets;
-        if (quantity > canRequest) {
+        if (qty > canRequest) {
             return res.status(400).json({
                 status: 0,
                 msg: `Solo puedes solicitar ${canRequest} entrada(s) más para este evento.`,
                 currentTickets: userExistingTickets,
                 canRequest: canRequest,
-                requested: quantity
+                requested: qty
             });
         }
 
-        // Check capacity and active reservations
-        const activeReservations = await Reservation.aggregate([
+        // Sync reservas activas y tomar cupo atómicamente en ticketsSold
+        const reservedCount = await syncReservedTickets(event._id);
+        const latestEvent = await Event.findOneAndUpdate(
             {
-                $match: {
-                    event: event._id,
-                    confirmed: false,
-                    reservedUntil: { $gt: new Date() }
+                _id: event._id,
+                $expr: {
+                    $lte: [
+                        {
+                            $add: [
+                                { $ifNull: ['$ticketsSold', 0] },
+                                { $ifNull: ['$reservedTickets', 0] },
+                                Number(qty)
+                            ]
+                        },
+                        '$capacity'
+                    ]
                 }
             },
-            {
-                $group: {
-                    _id: null,
-                    totalReserved: { $sum: '$quantity' }
-                }
-            }
-        ]);
-        const reservedCount = activeReservations.length > 0 ? activeReservations[0].totalReserved : 0;
+            { $inc: { ticketsSold: Number(qty) } },
+            { new: true }
+        );
+
         const ticketsSold = event.ticketsSold || 0;
         const availableTickets = event.capacity - ticketsSold - reservedCount;
 
@@ -591,14 +688,17 @@ const requestFreeTickets = async (req, res) => {
             });
         }
 
-        if (quantity > availableTickets) {
+        if (!latestEvent || qty > availableTickets) {
             return res.status(400).json({
                 status: 0,
                 msg: `Solo hay ${availableTickets} entrada(s) disponible(s)`,
                 available: availableTickets,
-                requested: quantity
+                requested: qty
             });
         }
+        soldCommitted = true;
+        committedEventId = event._id;
+        committedQty = qty;
 
         // Create a Payment record for tracking (price = 0 for free events)
         const payment = new Payment({
@@ -607,7 +707,7 @@ const requestFreeTickets = async (req, res) => {
             amount: 0,
             status: 'free_approved',
             ticketType: 'general',
-            quantity: quantity,
+            quantity: qty,
             mp_preference_id: 'FREE_PREF_' + userId + '_' + eventId + '_' + Date.now(),
             mp_payment_id: 'FREE_PAY_' + userId + '_' + eventId + '_' + Date.now(),
             external_reference: 'FREE_' + userId + '_' + eventId + '_' + Date.now(),
@@ -617,7 +717,7 @@ const requestFreeTickets = async (req, res) => {
         await payment.save();
 
         // Create tickets directly
-        const ticketsToCreate = Array(quantity).fill(null).map(() => ({
+        const ticketsToCreate = Array(qty).fill(null).map(() => ({
             user: userId,
             event: eventId,
             payment: payment._id,
@@ -652,15 +752,9 @@ const requestFreeTickets = async (req, res) => {
         });
         await Promise.all(qrPromises);
 
-        // Update event's ticketsSold
-        await Event.findByIdAndUpdate(
-            eventId,
-            { $inc: { ticketsSold: quantity } }
-        );
-
         // Enviar email de confirmación
         try {
-            await emailService.sendFreeTicketConfirmation(user, event, quantity, createdTickets);
+            await emailService.sendFreeTicketConfirmation(user, event, qty, createdTickets);
             console.log(`📧 Email de confirmación enviado a ${user.correo}`);
         } catch (emailError) {
             console.error('❌ Error enviando email de confirmación:', emailError.message);
@@ -669,11 +763,11 @@ const requestFreeTickets = async (req, res) => {
 
         res.json({
             status: 1,
-            msg: `Entradas gratuitas solicitadas con éxito. Total: ${quantity}`,
+            msg: `Entradas gratuitas solicitadas con éxito. Total: ${qty}`,
             payment: {
                 id: payment._id,
                 status: 'free_approved',
-                quantity: quantity,
+                quantity: qty,
                 amount: 0
             },
             tickets: createdTickets.map(t => ({
@@ -685,6 +779,13 @@ const requestFreeTickets = async (req, res) => {
 
     } catch (error) {
         console.error('Error en requestFreeTickets:', error);
+        if (soldCommitted && committedEventId && committedQty > 0) {
+            try {
+                await rollbackSoldTickets(committedEventId, committedQty);
+            } catch (rollbackError) {
+                console.error('Error haciendo rollback de ticketsSold en requestFreeTickets:', rollbackError.message);
+            }
+        }
         res.status(500).json({
             status: 0,
             msg: 'Error al solicitar entradas gratuitas',

@@ -53,7 +53,7 @@
                     </div>
                 </ng-container>
                 <ng-container *ngIf="!authService.currentUser()">
-                    <a routerLink="/admin/login" class="mobile-login-btn" (click)="closeMobileMenu()">Ingresar</a>
+                    <a routerLink="/login" class="mobile-login-btn" (click)="closeMobileMenu()">Ingresar</a>
                 </ng-container>
             </div>
         </nav>
@@ -83,7 +83,7 @@
             </ng-container>
 
             <ng-template #loginButton>
-                <a routerLink="/admin/login" class="btn btn-sm">Ingresar</a>
+                <a routerLink="/login" class="btn btn-sm">Ingresar</a>
             </ng-template>
         </div>
     </div>

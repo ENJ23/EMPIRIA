@@ -64,7 +64,7 @@ export class AuthService {
         this.currentUser.set(null);
         localStorage.removeItem('empiria_user');
         localStorage.removeItem('empiria_token');
-        this.router.navigate(['/admin/login']);
+        this.router.navigate(['/login']);
     }
 
     isAuthenticated(): boolean {

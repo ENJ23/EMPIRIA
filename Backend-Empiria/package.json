@@ -7,7 +7,8 @@
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
     "build": "echo 'No build command'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "stress:capacity": "node scripts/stress-capacity.js"
   },
   "keywords": [],
   "author": "",

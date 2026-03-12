@@ -26,6 +26,7 @@ const EventSchema = new mongoose.Schema({
     // Capacidad de entradas
     capacity: { type: Number, required: true },
     ticketsSold: { type: Number, default: 0 },
+    reservedTickets: { type: Number, default: 0 },
     
     // Preventa
     isPreventa: { type: Boolean, default: false },

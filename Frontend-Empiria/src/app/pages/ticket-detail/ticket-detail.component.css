@@ -257,6 +257,47 @@
     padding-bottom: 15px;
 }
 
+.manual-token-box {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 14px;
+    display: grid;
+    gap: 6px;
+    text-align: left;
+}
+
+.token-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+}
+
+.token-value {
+    font-size: 14px;
+    color: var(--text-main);
+    word-break: break-all;
+}
+
+.btn-copy-token {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 6px 8px;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.btn-copy-token .material-icons {
+    font-size: 16px;
+}
+
 .brand {
     font-weight: 700;
     letter-spacing: 2px;

@@ -29,7 +29,7 @@ const ReservationSchema = new mongoose.Schema({
         type: Date,
         required: true,
         index: true,
-        expires: 600 // TTL index: auto-delete 10 minutes after reservedUntil
+        expires: 0 // TTL index: auto-delete exactly at reservedUntil
     },
     createdAt: {
         type: Date,

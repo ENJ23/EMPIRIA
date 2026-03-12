@@ -73,6 +73,9 @@
                         <span class="material-icons">edit</span>
                         Verificación Manual
                     </label>
+                    <p class="selector-hint">
+                        Pega el contenido del QR, el ID de entrada (24 caracteres) o un texto que lo contenga.
+                    </p>
                     <textarea rows="3" placeholder="Pega el código QR o el ID de la entrada aquí..."
                         [(ngModel)]="manualInput"></textarea>
                     <button class="btn" type="button" (click)="verifyManual()"

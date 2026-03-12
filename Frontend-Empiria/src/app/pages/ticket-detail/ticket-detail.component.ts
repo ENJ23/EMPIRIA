@@ -193,4 +193,25 @@ export class TicketDetailComponent implements OnInit {
         link.download = `entrada-${tId}.png`;
         link.click();
     }
+
+    getManualToken(ticket: any): string {
+        const id = ticket?._id ? String(ticket._id) : '';
+        return id ? `TKT-${id}` : '';
+    }
+
+    async copyManualToken(ticket: any) {
+        const token = this.getManualToken(ticket);
+        if (!token) return;
+
+        try {
+            await navigator.clipboard.writeText(token);
+        } catch {
+            const textarea = document.createElement('textarea');
+            textarea.value = token;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+    }
 }

@@ -10,6 +10,10 @@ export const authGuard: CanActivateFn = (route, state) => {
         return true;
     }
 
-    // Redirect to login if not authenticated
-    return router.createUrlTree(['/admin/login']);
+    const isAdminPath = state.url.startsWith('/admin');
+    const loginPath = isAdminPath ? '/admin/login' : '/login';
+
+    return router.createUrlTree([loginPath], {
+        queryParams: { redirect: state.url }
+    });
 };

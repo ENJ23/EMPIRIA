@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 declare const google: any;
@@ -22,6 +22,7 @@ export class LoginComponent implements AfterViewInit {
         private formBuilder: FormBuilder,
         private authService: AuthService,
         private router: Router,
+        private route: ActivatedRoute,
         private ngZone: NgZone
     ) {
         this.loginForm = this.formBuilder.group({
@@ -98,9 +99,19 @@ export class LoginComponent implements AfterViewInit {
     }
 
     redirectUser() {
+        const redirect = this.route.snapshot.queryParamMap.get('redirect');
+
         if (this.authService.isAdmin()) {
-            this.router.navigate(['/admin/dashboard']);
+            if (redirect && redirect.startsWith('/admin')) {
+                this.router.navigateByUrl(redirect);
+                return;
+            }
+            this.router.navigate(['/admin']);
         } else {
+            if (redirect && !redirect.startsWith('/admin')) {
+                this.router.navigateByUrl(redirect);
+                return;
+            }
             this.router.navigate(['/']);
         }
     }
