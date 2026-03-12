@@ -23,7 +23,6 @@ export class TicketService {
     // Legacy: Authenticated polling by event (kept for compatibility)
     checkTicketStatus(eventId: string): Observable<any> {
         const token = this.authService.getToken();
-        console.log('TicketService: Polling with token:', token ? 'Token exists' : 'Token MISSING');
         return this.http.get(`${this.apiUrl}/status/${eventId}`, {
             headers: { 'x-token': token || '' }
         });
@@ -45,16 +44,12 @@ export class TicketService {
     // Fallback: Get ticket details by Payment ID (no JWT required)
     // Used when JWT fails but we have the payment ID from the purchase
     getTicketByPaymentId(paymentId: string): Observable<any> {
-        const url = `${this.apiUrl}/by-payment/${paymentId}`;
-        console.log(`[TicketService] Calling: ${url}`);
-        return this.http.get(url);
+        return this.http.get(`${this.apiUrl}/by-payment/${paymentId}`);
     }
 
     // New: Get ALL tickets for a payment
     getTicketsByPaymentId(paymentId: string): Observable<any> {
-        const url = `${this.apiUrl}/by-payment-all/${paymentId}`;
-        console.log(`[TicketService] Calling: ${url}`);
-        return this.http.get(url);
+        return this.http.get(`${this.apiUrl}/by-payment-all/${paymentId}`);
     }
 
     // Admin: list tickets with optional filters
@@ -66,16 +61,11 @@ export class TicketService {
         if (params.page) httpParams.page = params.page;
         if (params.limit) httpParams.limit = params.limit;
 
-        console.log('[TicketService.listTickets] Calling with params:', httpParams);
-        console.log('[TicketService.listTickets] Token:', token ? 'exists' : 'MISSING');
-        console.log('[TicketService.listTickets] URL:', this.apiUrl);
-
         return this.http.get<any>(`${this.apiUrl}`, {
             headers: { 'x-token': token || '' },
             params: httpParams
         }).pipe(
             map(res => {
-                console.log('[TicketService.listTickets] Raw response:', res);
                 return {
                     tickets: (res.tickets || []).map((t: any) => ({
                         id: t._id,

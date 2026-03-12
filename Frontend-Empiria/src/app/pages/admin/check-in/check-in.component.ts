@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild,
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import jsQRImport from 'jsqr';
+import { environment } from '../../../../environments/environment';
 import { TicketService } from '../../../core/services/ticket.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { EventService } from '../../../core/services/event.service';
@@ -30,6 +31,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
     resultStatus: 'idle' | 'success' | 'error' = 'idle';
     resultMessage = '';
     resultTicket: any = null;
+    cooldownSecondsLeft = 0;
 
     private stream: MediaStream | null = null;
     private frameRequestId: number | null = null;
@@ -40,7 +42,26 @@ export class CheckInComponent implements OnInit, OnDestroy {
     private frameCount = 0;
     private lastScanKey = '';
     private lastScanAt = 0;
-    private readonly duplicateScanCooldownMs = 8000;
+    private readonly duplicateScanCooldownMs = this.resolveMs(
+        environment?.checkIn?.duplicateScanCooldownMs,
+        8000,
+        2000,
+        30000
+    );
+    private readonly duplicateResumeDelayMs = this.resolveMs(
+        environment?.checkIn?.duplicateResumeDelayMs,
+        3500,
+        1000,
+        15000
+    );
+    private readonly defaultResumeDelayMs = this.resolveMs(
+        environment?.checkIn?.defaultResumeDelayMs,
+        5000,
+        1000,
+        15000
+    );
+    private cooldownUntil = 0;
+    private cooldownIntervalId: ReturnType<typeof setInterval> | null = null;
 
     private ticketService = inject(TicketService);
     private authService = inject(AuthService);
@@ -58,6 +79,14 @@ export class CheckInComponent implements OnInit, OnDestroy {
 
     get isAdmin(): boolean {
         return this.authService.isAdmin();
+    }
+
+    get duplicateScanCooldownSeconds(): number {
+        return Math.round(this.duplicateScanCooldownMs / 1000);
+    }
+
+    get defaultResumeDelaySeconds(): number {
+        return Math.round(this.defaultResumeDelayMs / 1000);
     }
 
     private loadEvents() {
@@ -110,6 +139,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
     }
 
     stopCamera() {
+        this.clearCooldownTimer();
         if (this.resumeTimeoutId) {
             clearTimeout(this.resumeTimeoutId);
             this.resumeTimeoutId = null;
@@ -138,6 +168,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         this.resultMessage = '';
         this.resultTicket = null;
         this.isScanning = true;
+        this.cooldownSecondsLeft = 0;
         this.cdr.detectChanges();
         this.scanLoop();
     }
@@ -215,9 +246,12 @@ export class CheckInComponent implements OnInit, OnDestroy {
         const now = Date.now();
 
         if (scanKey && scanKey === this.lastScanKey && now - this.lastScanAt < this.duplicateScanCooldownMs) {
-            this.scheduleAutoResume(3500);
+            this.startCooldownIndicator();
+            this.scheduleAutoResume(this.duplicateResumeDelayMs);
             return;
         }
+
+        this.clearCooldownTimer();
 
         this.lastScanKey = scanKey;
         this.lastScanAt = now;
@@ -307,7 +341,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         }
     }
 
-    private scheduleAutoResume(delayMs = 5000) {
+    private scheduleAutoResume(delayMs = this.defaultResumeDelayMs) {
         if (!this.isCameraActive) return;
         if (this.resumeTimeoutId) {
             clearTimeout(this.resumeTimeoutId);
@@ -318,6 +352,37 @@ export class CheckInComponent implements OnInit, OnDestroy {
             }
         }, delayMs);
         this.cdr.detectChanges();
+    }
+
+    private startCooldownIndicator() {
+        this.cooldownUntil = this.lastScanAt + this.duplicateScanCooldownMs;
+        this.updateCooldownSeconds();
+
+        if (this.cooldownIntervalId) {
+            clearInterval(this.cooldownIntervalId);
+        }
+
+        this.cooldownIntervalId = setInterval(() => {
+            this.updateCooldownSeconds();
+            if (this.cooldownSecondsLeft <= 0) {
+                this.clearCooldownTimer();
+            }
+        }, 250);
+        this.cdr.detectChanges();
+    }
+
+    private updateCooldownSeconds() {
+        const remainingMs = Math.max(0, this.cooldownUntil - Date.now());
+        this.cooldownSecondsLeft = Math.ceil(remainingMs / 1000);
+        this.cdr.detectChanges();
+    }
+
+    private clearCooldownTimer() {
+        if (this.cooldownIntervalId) {
+            clearInterval(this.cooldownIntervalId);
+            this.cooldownIntervalId = null;
+        }
+        this.cooldownSecondsLeft = 0;
     }
 
     private getScanKey(qrText: string, parsedPayload: any): string {
@@ -338,5 +403,11 @@ export class CheckInComponent implements OnInit, OnDestroy {
         const date = event.date instanceof Date ? event.date : new Date(event.date);
         const time = date.getTime();
         return Number.isNaN(time) ? Number.MAX_SAFE_INTEGER : time;
+    }
+
+    private resolveMs(value: unknown, fallback: number, min: number, max: number): number {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return fallback;
+        return Math.min(Math.max(parsed, min), max);
     }
 }

@@ -184,6 +184,19 @@
     min-width: 140px;
 }
 
+.scan-cooldown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fbbf24;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
+}
+
+.scan-cooldown .material-icons {
+    font-size: 18px;
+}
+
 /* Manual Input */
 .manual-box {
     padding-top: 24px;

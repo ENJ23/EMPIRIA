@@ -84,6 +84,15 @@
                         Reanudar
                     </button>
                 </div>
+
+                <p class="selector-hint">
+                    Configuración actual: bloqueo duplicado {{ duplicateScanCooldownSeconds }}s · reanudación automática {{ defaultResumeDelaySeconds }}s
+                </p>
+
+                <p class="scan-cooldown" *ngIf="cooldownSecondsLeft > 0">
+                    <span class="material-icons">schedule</span>
+                    Protección anti-duplicado activa ({{ cooldownSecondsLeft }}s)
+                </p>
             </div>
 
             <!-- Results Card -->
