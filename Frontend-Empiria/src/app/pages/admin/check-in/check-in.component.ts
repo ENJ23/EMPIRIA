@@ -38,6 +38,9 @@ export class CheckInComponent implements OnInit, OnDestroy {
     private barcodeDetector: any = null;
     private isDecodingFrame = false;
     private frameCount = 0;
+    private lastScanKey = '';
+    private lastScanAt = 0;
+    private readonly duplicateScanCooldownMs = 8000;
 
     private ticketService = inject(TicketService);
     private authService = inject(AuthService);
@@ -208,6 +211,16 @@ export class CheckInComponent implements OnInit, OnDestroy {
         const qrText = (rawData || '').trim();
         const parsedPayload = this.parseQrPayload(qrText);
         const qrEventId = parsedPayload?.eventId ? String(parsedPayload.eventId) : '';
+        const scanKey = this.getScanKey(qrText, parsedPayload);
+        const now = Date.now();
+
+        if (scanKey && scanKey === this.lastScanKey && now - this.lastScanAt < this.duplicateScanCooldownMs) {
+            this.scheduleAutoResume(3500);
+            return;
+        }
+
+        this.lastScanKey = scanKey;
+        this.lastScanAt = now;
 
         if (!this.selectedEventId && qrEventId) {
             this.selectedEventId = qrEventId;
@@ -294,7 +307,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         }
     }
 
-    private scheduleAutoResume(delayMs = 1500) {
+    private scheduleAutoResume(delayMs = 5000) {
         if (!this.isCameraActive) return;
         if (this.resumeTimeoutId) {
             clearTimeout(this.resumeTimeoutId);
@@ -305,6 +318,19 @@ export class CheckInComponent implements OnInit, OnDestroy {
             }
         }, delayMs);
         this.cdr.detectChanges();
+    }
+
+    private getScanKey(qrText: string, parsedPayload: any): string {
+        if (parsedPayload?.ticketId) {
+            return String(parsedPayload.ticketId);
+        }
+
+        const match = qrText.match(/[a-fA-F0-9]{24}/);
+        if (match) {
+            return match[0];
+        }
+
+        return qrText;
     }
 
     private getEventTime(event: Event): number {

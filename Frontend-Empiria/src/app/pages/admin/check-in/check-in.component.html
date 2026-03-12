@@ -39,6 +39,24 @@
                     </p>
                 </div>
 
+                <!-- Manual Input -->
+                <div class="manual-box">
+                    <label>
+                        <span class="material-icons">edit</span>
+                        Verificación Manual
+                    </label>
+                    <p class="selector-hint">
+                        Pega el contenido del QR, el ID de entrada (24 caracteres) o un texto que lo contenga.
+                    </p>
+                    <textarea rows="3" placeholder="Pega el código QR o el ID de la entrada aquí..."
+                        [(ngModel)]="manualInput"></textarea>
+                    <button class="btn" type="button" (click)="verifyManual()"
+                        [disabled]="isProcessing || !selectedEventId || !manualInput.trim()">
+                        <span class="material-icons">check_circle</span>
+                        Verificar
+                    </button>
+                </div>
+
                 <!-- Camera View -->
                 <div class="camera-box" [class.active]="isCameraActive">
                     <video #video muted playsinline></video>
@@ -64,24 +82,6 @@
                         [disabled]="!isCameraActive || isScanning">
                         <span class="material-icons">refresh</span>
                         Reanudar
-                    </button>
-                </div>
-
-                <!-- Manual Input -->
-                <div class="manual-box">
-                    <label>
-                        <span class="material-icons">edit</span>
-                        Verificación Manual
-                    </label>
-                    <p class="selector-hint">
-                        Pega el contenido del QR, el ID de entrada (24 caracteres) o un texto que lo contenga.
-                    </p>
-                    <textarea rows="3" placeholder="Pega el código QR o el ID de la entrada aquí..."
-                        [(ngModel)]="manualInput"></textarea>
-                    <button class="btn" type="button" (click)="verifyManual()"
-                        [disabled]="isProcessing || !selectedEventId || !manualInput.trim()">
-                        <span class="material-icons">check_circle</span>
-                        Verificar
                     </button>
                 </div>
             </div>
