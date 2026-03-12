@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import jsQRImport from 'jsqr';
@@ -35,12 +35,17 @@ export class CheckInComponent implements OnInit, OnDestroy {
     private frameRequestId: number | null = null;
     private resumeTimeoutId: ReturnType<typeof setTimeout> | null = null;
     private qrReader = ((jsQRImport as any)?.default || jsQRImport) as any;
+    private barcodeDetector: any = null;
+    private isDecodingFrame = false;
+    private frameCount = 0;
 
     private ticketService = inject(TicketService);
     private authService = inject(AuthService);
     private eventService = inject(EventService);
+    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {
+        this.initBarcodeDetector();
         this.loadEvents();
     }
 
@@ -54,6 +59,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
 
     private loadEvents() {
         this.isLoadingEvents = true;
+        this.cdr.detectChanges();
         this.eventService.getEvents().subscribe({
             next: (events) => {
                 this.events = (events || []).sort((a, b) => this.getEventTime(a) - this.getEventTime(b));
@@ -63,10 +69,12 @@ export class CheckInComponent implements OnInit, OnDestroy {
                     this.selectedEventId = upcoming?.id || this.events[0].id;
                 }
                 this.isLoadingEvents = false;
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.events = [];
                 this.isLoadingEvents = false;
+                this.cdr.detectChanges();
             }
         });
     }
@@ -88,11 +96,13 @@ export class CheckInComponent implements OnInit, OnDestroy {
                 await this.videoRef.nativeElement.play();
                 this.isCameraActive = true;
                 this.isScanning = true;
+                this.cdr.detectChanges();
                 this.scanLoop();
             }
         } catch (error) {
             this.resultStatus = 'error';
             this.resultMessage = 'No se pudo acceder a la cámara. Verifica permisos y que el sitio esté en HTTPS.';
+            this.cdr.detectChanges();
         }
     }
 
@@ -111,6 +121,8 @@ export class CheckInComponent implements OnInit, OnDestroy {
         }
         this.isCameraActive = false;
         this.isScanning = false;
+        this.isDecodingFrame = false;
+        this.cdr.detectChanges();
     }
 
     resumeScanning() {
@@ -123,10 +135,11 @@ export class CheckInComponent implements OnInit, OnDestroy {
         this.resultMessage = '';
         this.resultTicket = null;
         this.isScanning = true;
+        this.cdr.detectChanges();
         this.scanLoop();
     }
 
-    private scanLoop() {
+    private async scanLoop() {
         if (!this.isScanning) return;
 
         const video = this.videoRef?.nativeElement;
@@ -152,18 +165,33 @@ export class CheckInComponent implements OnInit, OnDestroy {
             return;
         }
 
-        ctx.drawImage(video, 0, 0, width, height);
-        const imageData = ctx.getImageData(0, 0, width, height);
-        let code: { data: string } | null = null;
-        try {
-            code = this.qrReader(imageData.data, width, height, { inversionAttempts: 'attemptBoth' });
-        } catch {
-            code = null;
+        if (this.isDecodingFrame) {
+            this.frameRequestId = requestAnimationFrame(() => this.scanLoop());
+            return;
         }
 
-        if (code?.data && !this.isProcessing) {
+        this.isDecodingFrame = true;
+
+        ctx.drawImage(video, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        let decodedValue: string | null = null;
+
+        const jsQrValue = this.decodeWithJsQr(imageData, width, height);
+        if (jsQrValue) {
+            decodedValue = jsQrValue;
+        } else {
+            this.frameCount += 1;
+            if (this.frameCount % 8 === 0) {
+                decodedValue = await this.decodeWithBarcodeDetector(canvas);
+            }
+        }
+
+        this.isDecodingFrame = false;
+
+        if (decodedValue && !this.isProcessing) {
             this.isScanning = false;
-            this.verifyQr(code.data);
+            this.cdr.detectChanges();
+            this.verifyQr(decodedValue);
             return;
         }
 
@@ -188,6 +216,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         if (!this.selectedEventId) {
             this.resultStatus = 'error';
             this.resultMessage = 'Selecciona un evento antes de validar.';
+            this.cdr.detectChanges();
             this.scheduleAutoResume();
             return;
         }
@@ -195,6 +224,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         if (qrEventId && this.selectedEventId !== qrEventId) {
             this.resultStatus = 'error';
             this.resultMessage = 'El QR pertenece a otro evento. Cambia el evento seleccionado.';
+            this.cdr.detectChanges();
             this.scheduleAutoResume();
             return;
         }
@@ -203,6 +233,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
         this.resultStatus = 'idle';
         this.resultMessage = '';
         this.resultTicket = null;
+        this.cdr.detectChanges();
 
         this.ticketService.verifyTicket({ qrData: qrText, eventId: this.selectedEventId }).subscribe({
             next: (res) => {
@@ -210,6 +241,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
                 this.resultMessage = res?.msg || 'Ingreso confirmado.';
                 this.resultTicket = res?.ticket || null;
                 this.isProcessing = false;
+                this.cdr.detectChanges();
                 this.scheduleAutoResume();
             },
             error: (err) => {
@@ -217,9 +249,40 @@ export class CheckInComponent implements OnInit, OnDestroy {
                 this.resultMessage = err?.error?.msg || 'No se pudo verificar la entrada.';
                 this.resultTicket = null;
                 this.isProcessing = false;
+                this.cdr.detectChanges();
                 this.scheduleAutoResume();
             }
         });
+    }
+
+    private initBarcodeDetector() {
+        const detectorCtor = (globalThis as any)?.BarcodeDetector;
+        if (!detectorCtor) return;
+        try {
+            this.barcodeDetector = new detectorCtor({ formats: ['qr_code'] });
+        } catch {
+            this.barcodeDetector = null;
+        }
+    }
+
+    private decodeWithJsQr(imageData: ImageData, width: number, height: number): string | null {
+        try {
+            const code = this.qrReader(imageData.data, width, height, { inversionAttempts: 'attemptBoth' });
+            return code?.data || null;
+        } catch {
+            return null;
+        }
+    }
+
+    private async decodeWithBarcodeDetector(source: CanvasImageSource): Promise<string | null> {
+        if (!this.barcodeDetector) return null;
+        try {
+            const codes = await this.barcodeDetector.detect(source);
+            if (!codes || !codes.length) return null;
+            return codes[0]?.rawValue || null;
+        } catch {
+            return null;
+        }
     }
 
     private parseQrPayload(rawData: string): any {
@@ -241,6 +304,7 @@ export class CheckInComponent implements OnInit, OnDestroy {
                 this.resumeScanning();
             }
         }, delayMs);
+        this.cdr.detectChanges();
     }
 
     private getEventTime(event: Event): number {
