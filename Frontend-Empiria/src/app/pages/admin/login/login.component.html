@@ -4,11 +4,11 @@
         <p class="text-center text-muted">{{ isRegisterMode ? 'Únete a Empiria' : 'Bienvenido a Empiria' }}</p>
 
         <!-- Google Login -->
-        <div class="google-login-wrapper">
+        <div class="google-login-wrapper" *ngIf="isGoogleLoginEnabled">
             <div id="google-btn"></div>
         </div>
 
-        <div class="divider">
+        <div class="divider" *ngIf="isGoogleLoginEnabled">
             <span>o ingresa con tu email</span>
         </div>
 

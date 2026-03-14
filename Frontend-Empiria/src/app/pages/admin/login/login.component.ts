@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 declare const google: any;
 
@@ -17,6 +18,8 @@ export class LoginComponent implements AfterViewInit {
     loginForm: FormGroup;
     errorMessage = '';
     isRegisterMode = false;
+    readonly googleClientId = environment.googleClientId || '';
+    readonly isGoogleLoginEnabled = !!this.googleClientId;
 
     constructor(
         private formBuilder: FormBuilder,
@@ -35,9 +38,9 @@ export class LoginComponent implements AfterViewInit {
 
     ngAfterViewInit() {
         // Initialize Google Sign-In
-        if (typeof google !== 'undefined') {
+        if (this.isGoogleLoginEnabled && typeof google !== 'undefined') {
             google.accounts.id.initialize({
-                client_id: '694732029000-ff12fftijqn22d7kiuaicdqs9dvkh98b.apps.googleusercontent.com',
+                client_id: this.googleClientId,
                 callback: (response: any) => this.handleGoogleCredential(response)
             });
 

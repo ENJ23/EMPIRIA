@@ -5,8 +5,16 @@ const { generarJWT } = require('../helpers/jwt');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '694732029000-ff12fftijqn22d7kiuaicdqs9dvkh98b.apps.googleusercontent.com');
 
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+
 const loginManual = async (req, res) => {
-    const { correo, contraseña } = req.body;
+    const correo = normalizeEmail(req.body?.correo);
+    const contraseña = String(req.body?.contraseña || req.body?.contrasena || req.body?.password || '');
+
+    if (!correo || !contraseña) {
+        return res.status(400).json({ status: 0, msg: 'Correo y contraseña son obligatorios' });
+    }
 
     try {
         const usuario = await User.findOne({ correo });
@@ -17,6 +25,10 @@ const loginManual = async (req, res) => {
 
         if (usuario.proveedor !== 'manual') {
             return res.status(401).json({ status: 0, msg: "Por favor, inicie sesión con Google" });
+        }
+
+        if (!isNonEmptyString(usuario.contraseña)) {
+            return res.status(401).json({ status: 0, msg: 'No se pudo validar la cuenta. Regístrate nuevamente.' });
         }
 
         const validPass = await bcrypt.compare(contraseña, usuario.contraseña);
@@ -101,7 +113,18 @@ const loginGoogle = async (req, res) => {
 
 // Register new user manually
 const register = async (req, res) => {
-    const { nombre, apellido, correo, contraseña } = req.body;
+    const nombre = String(req.body?.nombre || '').trim();
+    const apellido = String(req.body?.apellido || '').trim();
+    const correo = normalizeEmail(req.body?.correo);
+    const contraseña = String(req.body?.contraseña || req.body?.contrasena || req.body?.password || '');
+
+    if (!nombre || !correo || !contraseña) {
+        return res.status(400).json({ status: 0, msg: 'Nombre, correo y contraseña son obligatorios' });
+    }
+
+    if (contraseña.length < 6) {
+        return res.status(400).json({ status: 0, msg: 'La contraseña debe tener al menos 6 caracteres' });
+    }
 
     try {
         let usuario = await User.findOne({ correo });
@@ -141,6 +164,9 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
+        if (error?.code === 11000) {
+            return res.status(400).json({ status: 0, msg: 'El correo ya está registrado' });
+        }
         console.error('Error en registro:', error);
         res.status(500).json({ status: 0, msg: "Error interno del servidor" });
     }
